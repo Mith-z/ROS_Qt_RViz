@@ -1,10 +1,14 @@
 #ifndef QRVIZ_H
 #define QRVIZ_H
 
+#include "adddisplay.h"
+
 #include <QAbstractItemModel>
 #include <QObject>
 #include <QThread>
+#include <QTimer>
 #include <QVBoxLayout>
+#include <QtDebug>
 
 #include <rviz/default_plugin/view_controllers/orbit_view_controller.h>
 #include <rviz/display.h>
@@ -30,14 +34,19 @@ public:
   int GetDisplayTreeModelNum(QString ClassID);
   int GetDisplayTreeModelNum(QString ClassID, QString name);
 
+  void Sub_Image();
 signals:
   void DisplayTreeModelSignal(QAbstractItemModel *model);
+  void AddNewDisplaySignal(QString name);
+
+public slots:
 
 private:
   // rviz显示容器
   rviz::RenderPanel *renderPanel;
   rviz::VisualizationManager *visualManager;
   rviz::DisplayGroup *displayGroup;
+  // ImageView *imageView;
   // rviz控制工具
   rviz::Tool *currentTool;
   rviz::ToolManager *toolManager;

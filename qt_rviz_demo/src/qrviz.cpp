@@ -8,6 +8,7 @@ namespace qt_rviz_demo {
  */
 qrviz::qrviz(QVBoxLayout *qvboxLayout) {
   nullmap.clear();
+
   this->qVBoxLayout = qvboxLayout;
 
   renderPanel = new rviz::RenderPanel;
@@ -54,26 +55,45 @@ void qrviz::GetRVizDisplayTreeModel() {
 /**
  * @brief 初始化RViz显示TreeModel
  * @param RViz Display的属性ClassID
- * @param 属性name
+ * @param 属性名称name
  * @param enabled 是否显示
  * @param Value QMap映射，这个Display的一些属性和值
  */
 void qrviz::InitDisplayTreeModel(QString ClassID, QString name, bool enabled,
                                  QMap<QString, QVariant> Value) {
-  int num = GetDisplayTreeModelNum(ClassID, name);
-  if (num == -1) {
-    rviz::Display *rvizDisplay =
-        visualManager->createDisplay(ClassID, name, true);
-    ROS_ASSERT(rvizDisplay != nullptr);
-    num = GetDisplayTreeModelNum(ClassID, name);
-  }
+  //  int num = GetDisplayTreeModelNum(ClassID, name);
+  //  if (num == -1) {
+  //    rviz::Display *rvizDisplay =
+  //        visualManager->createDisplay(ClassID, name, true);
+  //    allDisplays.insert(rvizDisplay, name);
+  //    emit AddNewDisplaySignal(name);
+
+  //    ROS_ASSERT(rvizDisplay != nullptr);
+  //    num = GetDisplayTreeModelNum(ClassID, name);
+  //  }
+
+  //  if (!Value.empty()) {
+  //    QMap<QString, QVariant>::iterator it;
+  //    for (it = Value.begin(); it != Value.end(); it++) {
+  //      displayGroup->getDisplayAt(num)->subProp(it.key())->setValue(it.value());
+  //    }
+  //  }
+  //  displayGroup->getDisplayAt(num)->setEnabled(enabled);
+  //  visualManager->startUpdate();
+
+  rviz::Display *rvizDisplay =
+      visualManager->createDisplay(ClassID, name, true);
+  emit AddNewDisplaySignal(name);
+
+  ROS_ASSERT(rvizDisplay != nullptr);
+
   if (!Value.empty()) {
     QMap<QString, QVariant>::iterator it;
     for (it = Value.begin(); it != Value.end(); it++) {
-      displayGroup->getDisplayAt(num)->subProp(it.key())->setValue(it.value());
+      rvizDisplay->subProp(it.key())->setValue(it.value());
     }
   }
-  displayGroup->getDisplayAt(num)->setEnabled(enabled);
+  rvizDisplay->setEnabled(enabled);
   visualManager->startUpdate();
 }
 
@@ -108,4 +128,5 @@ int qrviz::GetDisplayTreeModelNum(QString ClassID, QString name) {
   }
   return num;
 }
+
 } // namespace qt_rviz_demo

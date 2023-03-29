@@ -11,6 +11,7 @@ set(TARGET_NAME qt_rviz_demo)
 
 #添加c++11的支持
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS}")
 
 ##############################################################################
 # Catkin
@@ -27,6 +28,12 @@ set(PCL_INCLUDE_DIRS /usr/include/pcl-1.8)
 find_package(PCL 1.8 REQUIRED)
 include_directories(include${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
+
+set(OpenCV_DIR /usr/share/OpenCV)
+message(STATUS "version: ${OpenCV_VERSION}")
+find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
+
 #add_executable(pcl_create src/pcl_create.cpp)
 #target_link_libraries(pcl_create ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
@@ -36,6 +43,7 @@ set(QT_LIBRARIES Qt5::Widgets Qt5::Multimedia)
 include_directories(
     ${catkin_INCLUDE_DIRS}
     /usr/include/QGRE
+    /opt/ros/melodic/include
     )
 # Use this to define what the package will export (e.g. libs, headers).
 # Since the default here is to produce only a binary, we don't worry about
@@ -75,6 +83,6 @@ file(GLOB_RECURSE QT_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINK
 ##############################################################################
 
 add_executable(${TARGET_NAME} ${QT_SOURCES} ${QT_RESOURCES_CPP} ${QT_FORMS_HPP} ${QT_MOC_HPP})
-target_link_libraries(${TARGET_NAME} ${QT_LIBRARIES} ${catkin_LIBRARIES})
+target_link_libraries(${TARGET_NAME} ${QT_LIBRARIES} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
