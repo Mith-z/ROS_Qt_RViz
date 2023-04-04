@@ -22,6 +22,8 @@
 #include <rqt_gui_cpp/plugin.h>
 #include <sensor_msgs/Image.h>
 
+#include <Python.h>
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -48,8 +50,8 @@ public slots:
   void GetRVizTreeModelSlot(QAbstractItemModel *model);
   void OnAddDisplayBtnClickedSlot();
   void AddNewDisplaySlot(QTreeWidgetItem *newDisplay, QString name);
+  void OnRemoveDisplayBtnClickedSlot();
   // void CameraCheckBoxSlot();
-  void Cam1TopicEditSlot(QString topic);
 
   void updateTopicList();
 
@@ -92,7 +94,6 @@ private:
   QList<QComboBox *> camTopicComboBox;
 
   ros::NodeHandle nh_;
-
   QList<image_transport::Subscriber> camSubcribers;
   image_transport::Subscriber subscriber_cam1;
   image_transport::Subscriber subscriber_cam2;

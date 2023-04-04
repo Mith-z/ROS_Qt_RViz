@@ -25,6 +25,8 @@ qrviz::qrviz(QVBoxLayout *qvboxLayout) {
   visualManager->initialize();
   visualManager->removeAllDisplays();
   visualManager->startUpdate();
+
+  visualManager->setFixedFrame("base_link");
 }
 
 /**
@@ -102,11 +104,11 @@ void qrviz::InitDisplayTreeModel(QString ClassID, QString name, bool enabled,
 /// \param ClassID
 /// \return int类型序号
 ///
-int qrviz::GetDisplayTreeModelNum(QString ClassID) {
+int qrviz::GetDisplayTreeModelNum(QString name) {
   int num = -1;
   for (int i = 0; i < displayGroup->numDisplays(); i++) {
     if (displayGroup->getDisplayAt(i) != nullptr) {
-      if (ClassID == displayGroup->getDisplayAt(i)->getClassId()) {
+      if (name == displayGroup->getDisplayAt(i)->getName()) {
         num = i;
         break;
       }
@@ -127,6 +129,13 @@ int qrviz::GetDisplayTreeModelNum(QString ClassID, QString name) {
     }
   }
   return num;
+}
+
+void qrviz::RemoveDisplay(QString displayName) {
+  if (GetDisplayTreeModelNum(displayName) == -1)
+    return;
+
+  delete displayGroup->getDisplayAt(GetDisplayTreeModelNum(displayName));
 }
 
 } // namespace qt_rviz_demo

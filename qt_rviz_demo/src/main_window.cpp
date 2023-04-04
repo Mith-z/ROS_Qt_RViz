@@ -12,16 +12,17 @@ MainWindow::MainWindow(QWidget *parent)
 
   initUI();
   initRViz();
-
-  addDisplayPanel = new AddDisplay();
-
   Connects();
 }
 
 MainWindow::~MainWindow() { delete ui; }
 
+/**
+ * @brief 初始化主窗口UI
+ */
 void MainWindow::initUI() {
   initializeDockWidgets();
+  addDisplayPanel = new AddDisplay();
 
   // camera
   camTopicComboBox.append(ui->cam1_topic_comboBox);
@@ -91,6 +92,8 @@ void MainWindow::initializeDockWidgets() {
 void MainWindow::Connects() {
   connect(ui->add_display_Btn, SIGNAL(clicked(bool)), this,
           SLOT(OnAddDisplayBtnClickedSlot()));
+  connect(ui->remove_display_Btn, SIGNAL(clicked(bool)), this,
+          SLOT(OnRemoveDisplayBtnClickedSlot()));
   connect(_qrviz, SIGNAL(AddNewDisplaySignal(QString)), addDisplayPanel,
           SLOT(AddNewDisplaySlot(QString)));
   connect(addDisplayPanel,
@@ -116,8 +119,26 @@ void MainWindow::Connects() {
 void MainWindow::OnAddDisplayBtnClickedSlot() { addDisplayPanel->show(); }
 
 /**
- * @brief MainWindow::AddNewDisplaySlot
- * @param name
+ * @brief 移除Display按钮
+ */
+void MainWindow::OnRemoveDisplayBtnClickedSlot() {
+  QModelIndex current = ui->typeTreeView->currentIndex();
+  if (current.isValid()) {
+    current = current.sibling(current.row(), 0);
+    QString name =
+        ui->typeTreeView->model()->itemData(current).values()[0].toString();
+    qDebug() << name;
+
+    _qrviz->RemoveDisplay(name);
+    if (addDisplayPanel->allDisplayNames.contains(name))
+      addDisplayPanel->allDisplayNames.removeOne(name);
+  }
+}
+
+/**
+ * @brief slot 添加display时调用
+ * @param newDisplay QTreeWidgetItem对象
+ * @param name 新建Display名称
  */
 void MainWindow::AddNewDisplaySlot(QTreeWidgetItem *newDisplay, QString name) {
   QMap<QString, QVariant> Value;
@@ -127,34 +148,10 @@ void MainWindow::AddNewDisplaySlot(QTreeWidgetItem *newDisplay, QString name) {
                                Value);
 }
 
-void MainWindow::Cam1TopicEditSlot(QString topic) {
-  //  if (topic != NULL) {
-  //    try {
-  //      qDebug("test");
-
-  //      if (ui->cam1_img_widget->findChild<ImageView *>("image") != NULL)
-  //        delete ui->cam1_img_widget->findChild<ImageView *>("image");
-
-  //      ImageView *imageView =
-  //          new ImageView(ui->cam1_img_widget, topic.toStdString());
-
-  //      imageView->setObjectName("image");
-  //      imageView->setParent(ui->cam1_img_widget);
-
-  //      if (ui->cam1_img_widget->layout() != NULL)
-  //        delete ui->cam1_img_widget->layout();
-
-  //      QGridLayout *layout = new QGridLayout(ui->cam1_img_widget);
-  //      layout->addWidget(imageView);
-  //      ui->cam1_img_widget->setLayout(layout);
-
-  //    } catch (Ogre::ItemIdentityException &e) {
-  //      ROS_ERROR("%s", (std::string("Error subscribing: ") +
-  //      e.what()).c_str());
-  //    }
-  //  }
-}
-
+/**
+ * @brief slot 选择camera topic时调用
+ * @param camera的combobox指数
+ */
 void MainWindow::Cam1TopicChangedSlot(int index) {
   OnCamTopicChanged(ui->cam1_topic_comboBox, ui->cam1_frame, index, 1);
 }
@@ -168,6 +165,9 @@ void MainWindow::Cam4TopicChangedSlot(int index) {
   OnCamTopicChanged(ui->cam4_topic_comboBox, ui->cam4_frame, index, 4);
 }
 
+/**
+ * @brief 更新image话题列表
+ */
 void MainWindow::updateTopicList() {
   QSet<QString> message_types;
   message_types.insert("sensor_msgs/Image");
@@ -226,6 +226,13 @@ void MainWindow::updateTopicList() {
   }
 }
 
+/**
+ * @brief 获取话题
+ * @param message_types 消息类型
+ * @param message_sub_types
+ * @param transports
+ * @return 话题集合
+ */
 QSet<QString> MainWindow::getTopics(const QSet<QString> &message_types,
                                     const QSet<QString> &message_sub_types,
                                     const QList<QString> &transports) {
@@ -274,6 +281,11 @@ QSet<QString> MainWindow::getTopics(const QSet<QString> &message_types,
   return topics;
 }
 
+/**
+ * @brief 选择话题
+ * @param comboBox camera对应的combobox组件
+ * @param topic 话题字符串
+ */
 void MainWindow::selectTopic(QComboBox *comboBox, const QString &topic) {
   int index = comboBox->findText(topic);
   if (index == -1) {
@@ -286,6 +298,13 @@ void MainWindow::selectTopic(QComboBox *comboBox, const QString &topic) {
   comboBox->setCurrentIndex(index);
 }
 
+/**
+ * @brief camera话题改变时调用
+ * @param comboBox camera对应的combobox组件
+ * @param frame 该camera对应的RatioLayoutedFrame组件
+ * @param index 该camera对应的combobox指数
+ * @param camSub 该camera的subscriber数组指数
+ */
 void MainWindow::OnCamTopicChanged(QComboBox *comboBox,
                                    rqt_image_view::RatioLayoutedFrame *frame,
                                    int index, int camSub) {
@@ -315,6 +334,11 @@ void MainWindow::OnCamTopicChanged(QComboBox *comboBox,
   }
 }
 
+/**
+ * @brief 订阅image话题的回调函数
+ * @param msg
+ * @param frame
+ */
 void MainWindow::callbackImage(const sensor_msgs::Image::ConstPtr &msg,
                                rqt_image_view::RatioLayoutedFrame *frame) {
   try {

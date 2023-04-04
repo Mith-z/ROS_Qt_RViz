@@ -13,6 +13,10 @@ set(TARGET_NAME qt_rviz_demo)
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS}")
 
+#添加python支持
+include_directories(/usr/include/python2.7)
+link_directories(/usr/lib/python2.7/config-x86_64-linux-gnu)
+
 ##############################################################################
 # Catkin
 ##############################################################################
@@ -84,5 +88,6 @@ file(GLOB_RECURSE QT_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINK
 
 add_executable(${TARGET_NAME} ${QT_SOURCES} ${QT_RESOURCES_CPP} ${QT_FORMS_HPP} ${QT_MOC_HPP})
 target_link_libraries(${TARGET_NAME} ${QT_LIBRARIES} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(qt_rviz_demo /usr/lib/python2.7/config-x86_64-linux-gnu/libpython2.7.so)
 install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 

@@ -22,6 +22,7 @@ public:
   bool HasRepeatedDisplayName(QString newName);
 
   QTreeWidgetItem *currentChoose;
+  QList<QString> allDisplayNames;
 
 signals:
   void ChooseDisplaySignal(QTreeWidgetItem *currentChoose,
@@ -42,8 +43,6 @@ private:
   QTreeWidgetItem *PointCloud2 = NULL;
   QTreeWidgetItem *Image = NULL;
   QTreeWidgetItem *Camera = NULL;
-
-  QList<QString> allDisplayNames;
 };
 
 #endif // ADDDISPLAY_H

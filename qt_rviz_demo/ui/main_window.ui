@@ -147,14 +147,14 @@
         <item>
          <widget class="QPushButton" name="add_display_Btn">
           <property name="text">
-           <string>Add Display</string>
+           <string>添加</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="delete_display_Btn">
+         <widget class="QPushButton" name="remove_display_Btn">
           <property name="text">
-           <string>Delete</string>
+           <string>移除</string>
           </property>
          </widget>
         </item>

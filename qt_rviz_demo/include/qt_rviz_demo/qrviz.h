@@ -33,6 +33,7 @@ public:
                             QMap<QString, QVariant> Value);
   int GetDisplayTreeModelNum(QString ClassID);
   int GetDisplayTreeModelNum(QString ClassID, QString name);
+  void RemoveDisplay(QString displayName);
 
   void Sub_Image();
 signals:
