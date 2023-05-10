@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../include/qt_rviz_demo/ratio_layouted_frame.h"
+#include "./include/qt_rviz_demo/UIPromoteClass/ratio_layouted_frame.h"
 
 #include <QMouseEvent>
 #include <assert.h>

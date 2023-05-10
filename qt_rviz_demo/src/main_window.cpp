@@ -10,12 +10,67 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
   ui->setupUi(this);
 
+  // node = new NodeInfo(ui);
+
   initUI();
   initRViz();
   Connects();
+
+  dataTimer = new QTimer();
+  dataTimerThread = new QThread(this);
+
+  //  ros::Rate loop_rate(1);
+  //  while (ros::ok()) {
+  //    UpdateDataTreeView();
+  //    ros::spinOnce();
+  //    loop_rate.sleep();
+  //  }
+
+  // std::cout << "pid= " << getpgrp() << std::endl;
+
+  // pythonTest();
 }
 
-MainWindow::~MainWindow() { delete ui; }
+void MainWindow::pythonTest() {
+  Py_Initialize();
+  PyRun_SimpleString("import sys");
+  PyRun_SimpleString(
+      "sys.path.append('/home/mith/catkin_qt/src/qt_rviz_demo/scripts')");
+  PyRun_SimpleString("print(sys.path)");
+
+  PyObject *pModule = PyImport_ImportModule("calltest");
+  if (pModule == NULL) {
+    PyErr_Print();
+    qDebug("cannot find module");
+  }
+
+  PyObject *pFunc = PyObject_GetAttrString(pModule, "func");
+  if (pFunc == NULL) {
+    PyErr_Print();
+    qDebug("cannot find function");
+  }
+
+  PyObject *pRet = PyObject_CallObject(pFunc, NULL);
+
+  char *result;
+  PyArg_Parse(pRet, "s", &result);
+  qDebug() << QString(QLatin1String(result));
+  Py_Finalize();
+}
+
+MainWindow::~MainWindow() {
+  delete ui;
+  if (dataTimer->isActive()) {
+    dataTimerThread->terminate();
+  }
+  if (dataTimerThread->isRunning()) {
+    dataTimerThread->terminate();
+  }
+  dataTimerThread->deleteLater();
+  dataTimerThread->wait();
+  delete dataTimerThread;
+  delete dataTimer;
+}
 
 /**
  * @brief 初始化主窗口UI
@@ -23,6 +78,14 @@ MainWindow::~MainWindow() { delete ui; }
 void MainWindow::initUI() {
   initializeDockWidgets();
   addDisplayPanel = new AddDisplay();
+
+  // toolbar
+  toolBarActions = ui->toolBar->actions();
+  toolBarActions.at(0)->setChecked(true);
+  QActionGroup *group = new QActionGroup(this);
+  for (int i = 0; i < toolBarActions.size(); i++) {
+    group->addAction(toolBarActions.at(i));
+  }
 
   // camera
   camTopicComboBox.append(ui->cam1_topic_comboBox);
@@ -36,6 +99,10 @@ void MainWindow::initUI() {
   camSubcribers.append(subscriber_cam2);
   camSubcribers.append(subscriber_cam3);
   camSubcribers.append(subscriber_cam4);
+  // data
+  emptyModel = new QStandardItemModel();
+  InitPC2Model();
+  ui->data_topic_comboBox->installEventFilter(this);
 }
 
 /**
@@ -84,16 +151,22 @@ void MainWindow::initializeDockWidgets() {
                     Qt::Horizontal);
   this->resizeDocks({typeDock, infoDock, cameraDock}, {300, 200, 175},
                     Qt::Vertical);
+
+  //合并
+  this->tabifyDockWidget(typeDock, infoDock);
+  typeDock->raise();
 }
 
 /**
  * @brief 链接各个Signal和Slot
  */
 void MainWindow::Connects() {
+
   connect(ui->add_display_Btn, SIGNAL(clicked(bool)), this,
           SLOT(OnAddDisplayBtnClickedSlot()));
   connect(ui->remove_display_Btn, SIGNAL(clicked(bool)), this,
           SLOT(OnRemoveDisplayBtnClickedSlot()));
+
   connect(_qrviz, SIGNAL(AddNewDisplaySignal(QString)), addDisplayPanel,
           SLOT(AddNewDisplaySlot(QString)));
   connect(addDisplayPanel,
@@ -111,6 +184,10 @@ void MainWindow::Connects() {
           SLOT(Cam3TopicChangedSlot(int)));
   connect(ui->cam4_topic_comboBox, SIGNAL(currentIndexChanged(int)), this,
           SLOT(Cam4TopicChangedSlot(int)));
+
+  // data treeview
+  connect(ui->data_topic_comboBox, SIGNAL(currentIndexChanged(QString)), this,
+          SLOT(DataTopicChangedSlot(QString)));
 }
 
 /**
@@ -165,6 +242,161 @@ void MainWindow::Cam4TopicChangedSlot(int index) {
   OnCamTopicChanged(ui->cam4_topic_comboBox, ui->cam4_frame, index, 4);
 }
 
+void MainWindow::OnInfoUpdateBtnClickedSlot() {
+  system("rosrun rqt_top rqt_top");
+}
+
+void MainWindow::DataTopicChangedSlot(QString topicName) {
+  OnDataTopicChanged(topicName);
+}
+
+bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
+  if (event->type() == QEvent::MouseButtonPress) {
+    if (watched == ui->data_topic_comboBox) {
+      QComboBox *comboBox = qobject_cast<QComboBox *>(watched);
+
+      comboBox->clear();
+
+      QMap<QString, QString> all_topics = GetAllTopicsAndTypes();
+
+      QMap<QString, QString>::const_iterator i = all_topics.constBegin();
+      while (i != all_topics.constEnd()) {
+        comboBox->addItem(i.key());
+        ++i;
+      }
+    }
+  }
+  return QMainWindow::eventFilter(watched, event);
+}
+
+// data tree view
+template <typename T> QString MainWindow::typeToString(T type) {
+  std::stringstream hexNumber;
+  hexNumber << std::setiosflags(ios::uppercase) << std::hex
+            << type; //大写十六进制
+  std::string result = hexNumber.str();
+  return QString::fromStdString(result);
+}
+
+void MainWindow::InitPC2Model() {
+  pc2Model = new QStandardItemModel();
+  pc2Model->setHorizontalHeaderLabels(QStringList() << u8"名称" << u8"数值");
+  // Header
+  QStandardItem *header = new QStandardItem(u8"Header");
+  pc2Model->appendRow(header);
+  QList<QStandardItem *> items;
+  AddTreeViewRow(header, "seq", "", items);
+  AddTreeViewRow(header, "stamp", "", items);
+  AddTreeViewRow(header->child(1, 0), "sec", "", items);
+  AddTreeViewRow(header->child(1, 0), "nsec", "", items);
+  AddTreeViewRow(header, "frame_id", "", items);
+
+  // height width
+  AddTreeViewRow(pc2Model, "Height", "", items);
+  AddTreeViewRow(pc2Model, "Width", "", items);
+  // fields
+  AddTreeViewRow(pc2Model, "Fields", "", items);
+  // is_bigendian point_step row_step is_dense
+  AddTreeViewRow(pc2Model, "is_bigendian", "", items);
+  AddTreeViewRow(pc2Model, "point_step", "", items);
+  AddTreeViewRow(pc2Model, "row_step", "", items);
+  AddTreeViewRow(pc2Model, "is_dense", "", items);
+}
+
+void MainWindow::UpdateDataTreeView() {}
+
+void MainWindow::AddTreeViewRow(QStandardItem *parentItem, QString name,
+                                QString data, QList<QStandardItem *> items) {
+  items.append(new QStandardItem(name));
+  items.append(new QStandardItem(data));
+  parentItem->appendRow(items);
+  items.clear();
+}
+
+void MainWindow::AddTreeViewRow(QStandardItemModel *parentModel, QString name,
+                                QString data, QList<QStandardItem *> items) {
+  items.append(new QStandardItem(name));
+  items.append(new QStandardItem(data));
+  parentModel->appendRow(items);
+  items.clear();
+}
+
+QMap<QString, QString> MainWindow::GetAllTopicsAndTypes() {
+  ros::master::V_TopicInfo topic_info;
+  ros::master::getTopics(topic_info);
+
+  QMap<QString, QString> all_topics;
+  for (ros::master::V_TopicInfo::const_iterator it = topic_info.begin();
+       it != topic_info.end(); it++) {
+    all_topics.insert(it->name.c_str(), it->datatype.c_str());
+  }
+
+  //  QMap<QString, QString>::const_iterator i = all_topic.constBegin();
+  //  while (i != all_topic.constEnd()) {
+  //    qDebug() << i.key() << ": " << i.value() << endl;
+  //    ++i;
+  //  }
+  return all_topics;
+}
+
+void MainWindow::OnDataTopicChanged(QString topicName) {
+  QMap<QString, QString> all_topics = GetAllTopicsAndTypes();
+  ui->dataType_LineEdit->setText(all_topics[topicName]);
+
+  if (dataTimer != NULL && dataTimer->isActive()) {
+    // dataTimer->stop();
+    dataTimerThread->terminate();
+    qDebug("yes");
+  }
+
+  if (all_topics[topicName] == "sensor_msgs/PointCloud2") {
+    ui->dataTreeView->setModel(pc2Model);
+    //设置水平表头列平均分
+    ui->dataTreeView->header()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->dataTreeView->expandAll();
+
+    UpdatePC2Data();
+    dataTimer->setInterval(1000);
+    dataTimer->moveToThread(dataTimerThread);
+    connect(dataTimer, SIGNAL(timeout()), this, SLOT(UpdatePC2Data()),
+            Qt::DirectConnection);
+    try {
+      connect(dataTimerThread, SIGNAL(started()), dataTimer, SLOT(start()));
+      connect(dataTimerThread, SIGNAL(finished()), dataTimer, SLOT(stop()));
+    } catch (exception e) {
+    }
+
+    dataTimerThread->start();
+
+  } else {
+    ui->dataTreeView->setModel(emptyModel);
+  }
+}
+
+void MainWindow::UpdatePC2Data() {
+
+  boost::shared_ptr<sensor_msgs::PointCloud2 const> pc2;
+  std::string topic = ui->data_topic_comboBox->currentText().toStdString();
+  pc2 = ros::topic::waitForMessage<sensor_msgs::PointCloud2>(topic, nh_);
+
+  pc2Model->item(0, 0)->child(0, 1)->setText(
+      QString("%1").arg(pc2->header.seq));
+  pc2Model->item(0, 0)->child(1, 0)->child(0, 1)->setText(
+      QString("%1").arg(pc2->header.stamp.sec));
+  pc2Model->item(0, 0)->child(1, 0)->child(1, 1)->setText(
+      QString("%1").arg(pc2->header.stamp.nsec));
+
+  pc2Model->item(0, 0)->child(2, 1)->setText(
+      typeToString(pc2->header.frame_id));
+  pc2Model->item(1, 1)->setText(QString("%1").arg(pc2->height));
+  pc2Model->item(2, 1)->setText(QString("%1").arg(pc2->width));
+  pc2Model->item(4, 1)->setText(QString("%1").arg(pc2->is_bigendian));
+  pc2Model->item(5, 1)->setText(QString("%1").arg(pc2->point_step));
+  pc2Model->item(6, 1)->setText(QString("%1").arg(pc2->row_step));
+  pc2Model->item(7, 1)->setText(QString("%1").arg(pc2->is_dense));
+}
+
+// camera
 /**
  * @brief 更新image话题列表
  */
@@ -321,7 +553,6 @@ void MainWindow::OnCamTopicChanged(QComboBox *comboBox,
   QString transport = parts.length() == 2 ? parts.last() : "raw";
 
   if (!topic.isEmpty()) {
-
     image_transport::ImageTransport it(nh_);
     image_transport::TransportHints hints(transport.toStdString());
     try {

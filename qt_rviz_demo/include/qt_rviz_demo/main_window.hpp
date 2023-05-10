@@ -1,26 +1,31 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "UIPromoteClass/ratio_layouted_frame.h"
 #include "adddisplay.h"
-#include "image_view.h"
+#include "node_info.h"
 #include "qrviz.h"
-#include "ratio_layouted_frame.h"
 
 #include <QAbstractItemModel>
 #include <QComboBox>
 #include <QGraphicsPixmapItem>
 #include <QMainWindow>
 #include <QMessageBox>
+#include <QProcess>
 #include <QResizeEvent>
 #include <QSettings>
 
 #include <boost/bind.hpp>
+#include <cv.h>
+#include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 #include <nodelet/nodelet.h>
 #include <ros/macros.h>
+#include <ros/master.h>
 #include <ros/package.h>
 #include <rqt_gui_cpp/plugin.h>
 #include <sensor_msgs/Image.h>
+#include <sensor_msgs/PointCloud2.h>
 
 #include <Python.h>
 
@@ -39,6 +44,7 @@ public:
   MainWindow(QWidget *parent = nullptr);
   ~MainWindow();
 
+  Ui::MainWindow *ui;
   //窗口组件
   void initUI();
   void initializeDockWidgets();
@@ -51,6 +57,7 @@ public slots:
   void OnAddDisplayBtnClickedSlot();
   void AddNewDisplaySlot(QTreeWidgetItem *newDisplay, QString name);
   void OnRemoveDisplayBtnClickedSlot();
+  void OnInfoUpdateBtnClickedSlot();
   // void CameraCheckBoxSlot();
 
   void updateTopicList();
@@ -60,7 +67,14 @@ public slots:
   void Cam3TopicChangedSlot(int index);
   void Cam4TopicChangedSlot(int index);
 
+  void DataTopicChangedSlot(QString topicName);
+  void UpdatePC2Data();
+  void UpdateDataTreeView();
+
+  bool eventFilter(QObject *watched, QEvent *event);
+
 protected:
+  // camera
   QSet<QString> getTopics(const QSet<QString> &message_types,
                           const QSet<QString> &message_sub_types,
                           const QList<QString> &transports);
@@ -68,9 +82,20 @@ protected:
   void OnCamTopicChanged(QComboBox *comboBox,
                          rqt_image_view::RatioLayoutedFrame *frame, int index,
                          int camSub);
-
   void callbackImage(const sensor_msgs::Image::ConstPtr &msg,
                      rqt_image_view::RatioLayoutedFrame *frame);
+
+  // data treeview
+  template <typename T> QString typeToString(T type);
+  void InitPC2Model();
+  void AddTreeViewRow(QStandardItem *parentItem, QString name, QString data,
+                      QList<QStandardItem *> items);
+  void AddTreeViewRow(QStandardItemModel *parentModel, QString name,
+                      QString data, QList<QStandardItem *> items);
+  QMap<QString, QString> GetAllTopicsAndTypes();
+  void OnDataTopicChanged(QString topicName);
+
+  void pythonTest();
 
   cv::Mat conversion_mat_;
   int num_gridlines_;
@@ -85,20 +110,26 @@ protected:
   RotateState rotate_state_;
 
 private:
-  Ui::MainWindow *ui;
-
+  ros::NodeHandle nh_;
+  NodeInfo *node;
   qrviz *_qrviz;
+
+  QTimer *dataTimer;
+  QThread *dataTimerThread;
+  // ui
   QAbstractItemModel *modelRvizDisplay;
   AddDisplay *addDisplayPanel;
-
+  QList<QAction *> toolBarActions;
   QList<QComboBox *> camTopicComboBox;
-
-  ros::NodeHandle nh_;
   QList<image_transport::Subscriber> camSubcribers;
+
   image_transport::Subscriber subscriber_cam1;
   image_transport::Subscriber subscriber_cam2;
   image_transport::Subscriber subscriber_cam3;
   image_transport::Subscriber subscriber_cam4;
+  // data
+  QStandardItemModel *emptyModel;
+  QStandardItemModel *pc2Model;
 };
 #endif // MAINWINDOW_H
 

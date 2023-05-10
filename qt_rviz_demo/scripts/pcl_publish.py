@@ -10,7 +10,7 @@ from std_msgs.msg import Header
 from sensor_msgs.msg import Image,PointCloud2
 import sensor_msgs.point_cloud2 as pcl2
 
-DATA_PATH = "/home/mith/桌面/Desktop/kitti/velodyne/"
+DATA_PATH = "/home/mith/桌面/Desktop/数据集/kitti/"
 
 
 if  __name__ == "__main__":
@@ -26,7 +26,7 @@ if  __name__ == "__main__":
         #img = cv2.imread(os.path.join(DATA_PATH, 'image_02/data/%06d.png'%frame))
         #cam_pub.publish(bridge.cv2_to_imgmsg(img,"bgr8"))
 
-        point_cloud = np.fromfile(os.path.join(DATA_PATH, '%06d.bin'%frame),dtype=np.float32).reshape(-1,4)
+        point_cloud = np.fromfile(os.path.join(DATA_PATH, 'aaa.bin'),dtype=np.float32).reshape(-1,4)
         header = Header()
         header.stamp = rospy.Time.now()
         header.frame_id = 'map'
