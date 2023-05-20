@@ -13,6 +13,7 @@ from socket import error as SocketError
 import psutil
 import sys
 
+
 from python_qt_binding.QtCore import Qt, QTimer
 from python_qt_binding.QtWidgets import QApplication
 
@@ -56,12 +57,15 @@ class NodeInfo(object):
 
     def func(self):
         infos = self.get_all_node_fields(self.NODE_FIELDS)
-
+        out = ''
+        result = ''
         for nx, info in enumerate(infos):
             for col, field in enumerate(self.OUT_FIELDS):
                 val = info[field]
-                print(self.FORMAT_STRS[col] % val)
-        #print(infos)
+                out = out + self.FORMAT_STRS[col] % val+ ' '
+            result = result + out + '\n'
+            out = ''
+        return result
 
     def get_all_node_fields(self, fields):
         processes = self.get_all_node_info()
@@ -128,13 +132,17 @@ class NodeInfo(object):
         return retdict
 
 if __name__ == '__main__':
+    # 初始化 ROS 节点
+    rospy.init_node('my_node')
+
     app = QApplication(sys.argv)
     node = NodeInfo()
-    _update_timer = QTimer()
-    _update_timer.setInterval(1000)
-    _update_timer.timeout.connect(node.func)
-    _update_timer.start()
-    sys.exit(app.exec_())
+    node.func()
+#    _update_timer = QTimer()
+#    _update_timer.setInterval(1000)
+#    _update_timer.timeout.connect(node.func)
+#    _update_timer.start()
+#    sys.exit(app.exec_())
 
 
 

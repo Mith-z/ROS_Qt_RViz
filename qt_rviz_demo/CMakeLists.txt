@@ -90,9 +90,17 @@ QT5_WRAP_CPP(QT_MOC_HPP ${QT_MOC})
 file(GLOB_RECURSE QT_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINKS src/*.cpp
     src/UIPromoteClass/*.cpp)
 
+file(GLOB_RECURSE PY_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINKS scripts/*.py)
+
+# 安装 Python 脚本文件
+catkin_install_python(PROGRAMS ${PY_SOURCES}
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
+)
+
 ##############################################################################
 # Binaries
 ##############################################################################
+add_definitions(-DMY_SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_executable(${TARGET_NAME} ${QT_SOURCES} ${QT_RESOURCES_CPP} ${QT_FORMS_HPP} ${QT_MOC_HPP})
 target_link_libraries(${TARGET_NAME} ${QT_LIBRARIES} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})

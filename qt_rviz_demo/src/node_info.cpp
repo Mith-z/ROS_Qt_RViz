@@ -26,11 +26,6 @@ NodeInfo::NodeInfo(Ui::MainWindow *mainwindow) : ui(mainwindow) {
   GetProcessInfo(0);
   connect(timer, SIGNAL(timeout()), this, SLOT(UpdateStat()));
   connect(ui->pushButton, SIGNAL(clicked(bool)), this, SLOT(button()));
-  //  int total;
-  //  GetSystemMemUsed(total);
-  //  cout << total << endl;
-  //  cout << GetProcessMemUsed() << endl;
-  //  cout << float(GetProcessMemUsed()) / float(total) << endl;
 }
 
 NodeInfo::~NodeInfo() {

@@ -6,29 +6,15 @@
 
 namespace qt_rviz_demo {
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(QWidget *parent, int argc, char *argv[])
     : QMainWindow(parent), ui(new Ui::MainWindow) {
   ui->setupUi(this);
 
   // node = new NodeInfo(ui);
-
+  node_ = new nodeinfo(ui, argc, argv);
   initUI();
   initRViz();
   Connects();
-
-  dataTimer = new QTimer();
-  dataTimerThread = new QThread(this);
-
-  //  ros::Rate loop_rate(1);
-  //  while (ros::ok()) {
-  //    UpdateDataTreeView();
-  //    ros::spinOnce();
-  //    loop_rate.sleep();
-  //  }
-
-  // std::cout << "pid= " << getpgrp() << std::endl;
-
-  // pythonTest();
 }
 
 void MainWindow::pythonTest() {
@@ -36,9 +22,8 @@ void MainWindow::pythonTest() {
   PyRun_SimpleString("import sys");
   PyRun_SimpleString(
       "sys.path.append('/home/mith/catkin_qt/src/qt_rviz_demo/scripts')");
-  PyRun_SimpleString("print(sys.path)");
 
-  PyObject *pModule = PyImport_ImportModule("calltest");
+  PyObject *pModule = PyImport_ImportModule("pcl_publish");
   if (pModule == NULL) {
     PyErr_Print();
     qDebug("cannot find module");
@@ -52,9 +37,9 @@ void MainWindow::pythonTest() {
 
   PyObject *pRet = PyObject_CallObject(pFunc, NULL);
 
-  char *result;
-  PyArg_Parse(pRet, "s", &result);
-  qDebug() << QString(QLatin1String(result));
+  //  char *result;
+  //  PyArg_Parse(pRet, "s", &result);
+  //  qDebug() << QString(QLatin1String(result));
   Py_Finalize();
 }
 
@@ -101,6 +86,8 @@ void MainWindow::initUI() {
   camSubcribers.append(subscriber_cam4);
   // data
   emptyModel = new QStandardItemModel();
+  dataTimer = new QTimer();
+  dataTimerThread = new QThread(this);
   InitPC2Model();
   ui->data_topic_comboBox->installEventFilter(this);
 }
@@ -330,12 +317,6 @@ QMap<QString, QString> MainWindow::GetAllTopicsAndTypes() {
        it != topic_info.end(); it++) {
     all_topics.insert(it->name.c_str(), it->datatype.c_str());
   }
-
-  //  QMap<QString, QString>::const_iterator i = all_topic.constBegin();
-  //  while (i != all_topic.constEnd()) {
-  //    qDebug() << i.key() << ": " << i.value() << endl;
-  //    ++i;
-  //  }
   return all_topics;
 }
 
@@ -356,7 +337,7 @@ void MainWindow::OnDataTopicChanged(QString topicName) {
     ui->dataTreeView->expandAll();
 
     UpdatePC2Data();
-    dataTimer->setInterval(1000);
+    dataTimer->setInterval(200);
     dataTimer->moveToThread(dataTimerThread);
     connect(dataTimer, SIGNAL(timeout()), this, SLOT(UpdatePC2Data()),
             Qt::DirectConnection);

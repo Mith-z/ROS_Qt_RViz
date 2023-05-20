@@ -1,9 +1,11 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "PointcloudPublish/pointcloud_pub.h"
 #include "UIPromoteClass/ratio_layouted_frame.h"
 #include "adddisplay.h"
 #include "node_info.h"
+#include "nodeinfo.h"
 #include "qrviz.h"
 
 #include <QAbstractItemModel>
@@ -41,7 +43,7 @@ class MainWindow : public QMainWindow {
   Q_OBJECT
 
 public:
-  MainWindow(QWidget *parent = nullptr);
+  MainWindow(QWidget *parent = nullptr, int argc = 0, char *argv[] = {});
   ~MainWindow();
 
   Ui::MainWindow *ui;
@@ -111,7 +113,10 @@ protected:
 
 private:
   ros::NodeHandle nh_;
+  ros::NodeHandle *nh;
   NodeInfo *node;
+  nodeinfo *node_;
+  Pointcloud_Pub *pub;
   qrviz *_qrviz;
 
   QTimer *dataTimer;
