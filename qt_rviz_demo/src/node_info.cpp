@@ -13,7 +13,7 @@ NodeInfo::NodeInfo(Ui::MainWindow *mainwindow) : ui(mainwindow) {
   this->CpuState = true;
   this->model = this->cpu_model;
   this->InitTable();
-  ui->node_info_frame->add_data(0.1);
+
   process_map = new std::map<int, int>();
   username_dict = GetUsernameDict();
   timer->start(2000);
@@ -25,7 +25,6 @@ NodeInfo::NodeInfo(Ui::MainWindow *mainwindow) : ui(mainwindow) {
   GetCPUStat();
   GetProcessInfo(0);
   connect(timer, SIGNAL(timeout()), this, SLOT(UpdateStat()));
-  connect(ui->pushButton, SIGNAL(clicked(bool)), this, SLOT(button()));
 }
 
 NodeInfo::~NodeInfo() {
@@ -269,7 +268,7 @@ void NodeInfo::GetCPUStat() {
       //                               'f', 1)));
       //      ui->right_1->setStyleSheet("QLabel {\n	color:rgb(242, 21,
       //      21)\n}");
-      ui->node_info_frame->add_data(total_rate);
+      //      ui->node_info_frame->add_data(total_rate);
     }
     this->total_cpu_time = total_cpu_time;
     this->total_idle_time = idle;
@@ -306,7 +305,7 @@ void NodeInfo::GetMEMStat() {
     float rate = mem_used * 100.0 / mem_total;
     this->mem_size = mem_total;
 
-    ui->node_info_frame->add_data(rate / 100);
+    //    ui->node_info_frame->add_data(rate / 100);
     input.close();
   }
   GetProcessInfo(0);

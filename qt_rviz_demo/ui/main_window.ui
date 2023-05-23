@@ -180,55 +180,26 @@
       <widget class="QWidget" name="node_info_widget" native="true">
        <layout class="QVBoxLayout" name="verticalLayout_6">
         <item>
-         <widget class="QTabWidget" name="nodeinfo_tabWidget">
-          <property name="currentIndex">
-           <number>0</number>
+         <widget class="QTableView" name="node_info_tableView">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>4</verstretch>
+           </sizepolicy>
           </property>
-          <widget class="QWidget" name="cpu_tab">
-           <attribute name="title">
-            <string>CPU</string>
-           </attribute>
-           <layout class="QVBoxLayout" name="verticalLayout_13">
-            <item>
-             <widget class="QTableView" name="node_info_tableView">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                <horstretch>0</horstretch>
-                <verstretch>4</verstretch>
-               </sizepolicy>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="qt_rviz_demo::NodeInfoDrawer" name="node_info_frame">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>1</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
-              </property>
-              <property name="frameShadow">
-               <enum>QFrame::Raised</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-          <widget class="QWidget" name="mem_tab">
-           <attribute name="title">
-            <string>MEM</string>
-           </attribute>
-          </widget>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton">
-          <property name="text">
-           <string>PushButton</string>
-          </property>
+         <widget class="QWidget" name="widget_2" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_13">
+           <item>
+            <widget class="QPushButton" name="pushButton">
+             <property name="text">
+              <string>PushButton</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
        </layout>
@@ -1022,12 +993,6 @@
    <class>rqt_image_view::RatioLayoutedFrame</class>
    <extends>QFrame</extends>
    <header>./include/qt_rviz_demo/UIPromoteClass/ratio_layouted_frame.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>qt_rviz_demo::NodeInfoDrawer</class>
-   <extends>QFrame</extends>
-   <header>./include/qt_rviz_demo/UIPromoteClass/node_info_drawer.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
