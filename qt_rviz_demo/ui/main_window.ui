@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1245</width>
-    <height>763</height>
+    <width>1337</width>
+    <height>846</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -55,6 +55,32 @@
        <attribute name="title">
         <string>Tab 2</string>
        </attribute>
+       <widget class="QPushButton" name="detect_Btn">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>80</width>
+          <height>26</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>检测</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="publish_Btn">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>50</y>
+          <width>80</width>
+          <height>26</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>发布</string>
+        </property>
+       </widget>
       </widget>
      </widget>
     </item>
@@ -65,8 +91,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1245</width>
-     <height>23</height>
+     <width>1337</width>
+     <height>28</height>
     </rect>
    </property>
    <widget class="QMenu" name="fileMenu">
@@ -119,6 +145,8 @@
    <addaction name="choose_action"/>
    <addaction name="camera_move_action"/>
    <addaction name="camera_focus_action"/>
+   <addaction name="separator"/>
+   <addaction name="pause_action"/>
   </widget>
   <widget class="QDockWidget" name="typeDock">
    <property name="sizePolicy">
@@ -179,6 +207,21 @@
      <item>
       <widget class="QWidget" name="node_info_widget" native="true">
        <layout class="QVBoxLayout" name="verticalLayout_6">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
         <item>
          <widget class="QTableView" name="node_info_tableView">
           <property name="sizePolicy">
@@ -187,19 +230,6 @@
             <verstretch>4</verstretch>
            </sizepolicy>
           </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QWidget" name="widget_2" native="true">
-          <layout class="QVBoxLayout" name="verticalLayout_13">
-           <item>
-            <widget class="QPushButton" name="pushButton">
-             <property name="text">
-              <string>PushButton</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
          </widget>
         </item>
        </layout>
@@ -985,6 +1015,14 @@
    </property>
    <property name="text">
     <string>摄像机聚焦</string>
+   </property>
+  </action>
+  <action name="pause_action">
+   <property name="text">
+    <string>暂停</string>
+   </property>
+   <property name="toolTip">
+    <string>暂停播放点云</string>
    </property>
   </action>
  </widget>

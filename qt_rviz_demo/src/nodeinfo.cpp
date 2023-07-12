@@ -1,6 +1,5 @@
 #include "../include/qt_rviz_demo/nodeinfo.h"
 #include "ui_main_window.h"
-using namespace QtCharts;
 
 nodeinfo::nodeinfo(Ui::MainWindow *mainwindow, int argc, char *argv[])
     : ui(mainwindow) {
@@ -65,7 +64,7 @@ void nodeinfo::updateNodeInfo() {}
 
 void nodeinfo::GetAllNodesInfo(PyObject *module, int argc, char *argv[]) {
 
-  PyObject *pFunc = PyObject_GetAttrString(module, "func");
+  PyObject *pFunc = PyObject_GetAttrString(module, "all_nodes_info");
   if (pFunc == NULL) {
     PyErr_Print();
     qDebug("cannot find function");

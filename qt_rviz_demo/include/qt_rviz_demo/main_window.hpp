@@ -4,7 +4,6 @@
 #include "PointcloudPublish/pointcloud_pub.h"
 #include "UIPromoteClass/ratio_layouted_frame.h"
 #include "adddisplay.h"
-#include "node_info.h"
 #include "nodeinfo.h"
 #include "qrviz.h"
 
@@ -16,11 +15,14 @@
 #include <QProcess>
 #include <QResizeEvent>
 #include <QSettings>
+#include <QVariant>
 
 #include <boost/bind.hpp>
 #include <cv.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
+#include <iomanip>
+#include <iostream>
 #include <nodelet/nodelet.h>
 #include <ros/macros.h>
 #include <ros/master.h>
@@ -30,6 +32,23 @@
 #include <sensor_msgs/PointCloud2.h>
 
 #include <Python.h>
+#include <curl/curl.h>
+#include <thread>
+
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <nav_msgs/Odometry.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/io/io.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/io/ply_io.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <ros/ros.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <sstream>
+#include <string>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -54,6 +73,9 @@ public:
 
   void Connects();
 
+  static void
+  FrontPoint_callback(const sensor_msgs::PointCloud2::ConstPtr &cloud_msg);
+
 public slots:
   void GetRVizTreeModelSlot(QAbstractItemModel *model);
   void OnAddDisplayBtnClickedSlot();
@@ -72,6 +94,13 @@ public slots:
   void DataTopicChangedSlot(QString topicName);
   void UpdatePC2Data();
   void UpdateDataTreeView();
+
+  //工具栏
+  void PauseActionClickedSlot();
+
+  //模型
+  void DeteceBtnSlot();
+  void PublishBtnSlot();
 
   bool eventFilter(QObject *watched, QEvent *event);
 
@@ -98,6 +127,7 @@ protected:
   void OnDataTopicChanged(QString topicName);
 
   void pythonTest();
+  void static run_python_code(PyObject *callback);
 
   cv::Mat conversion_mat_;
   int num_gridlines_;
@@ -114,7 +144,6 @@ protected:
 private:
   ros::NodeHandle nh_;
   ros::NodeHandle *nh;
-  NodeInfo *node;
   nodeinfo *node_;
   Pointcloud_Pub *pub;
   qrviz *_qrviz;

@@ -55,18 +55,6 @@ class NodeInfo(object):
 #        print(infos)
         return infos
 
-    def func(self):
-        infos = self.get_all_node_fields(self.NODE_FIELDS)
-        out = ''
-        result = ''
-        for nx, info in enumerate(infos):
-            for col, field in enumerate(self.OUT_FIELDS):
-                val = info[field]
-                out = out + self.FORMAT_STRS[col] % val+ ' '
-            result = result + out + '\n'
-            out = ''
-        return result
-
     def get_all_node_fields(self, fields):
         processes = self.get_all_node_info()
         infos = []
@@ -131,6 +119,19 @@ class NodeInfo(object):
             retdict[name] = ret
         return retdict
 
+    #供C++调用的函数
+    def get_all_node_infos(self):
+        infos = self.get_all_node_fields(self.NODE_FIELDS)
+        out = ''
+        result = ''
+        for nx, info in enumerate(infos):
+            for col, field in enumerate(self.OUT_FIELDS):
+                val = info[field]
+                out = out + self.FORMAT_STRS[col] % val+ ' '
+            result = result + out + '\n'
+            out = ''
+        return result
+
 if __name__ == '__main__':
     # 初始化 ROS 节点
     rospy.init_node('my_node')
@@ -138,11 +139,6 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     node = NodeInfo()
     node.func()
-#    _update_timer = QTimer()
-#    _update_timer.setInterval(1000)
-#    _update_timer.timeout.connect(node.func)
-#    _update_timer.start()
-#    sys.exit(app.exec_())
 
 
 

@@ -8,7 +8,7 @@ from os import makedirs
 
 def detection(point_cloud, score_thr, out_dir, file_name):
 # 发送POST请求到服务端
-    url = 'http://10.236.11.66:5000/predict'
+    url = 'http://10.236.11.118:5000/predict'
     data = {'point_cloud': point_cloud, 'score_thr': score_thr}
     response = requests.post(url, json=data)
     if response.status_code == 200:
@@ -18,13 +18,20 @@ def detection(point_cloud, score_thr, out_dir, file_name):
         # boxes = np.array(result['boxes'])
         # labels = np.array(result['pred_classes'])
         # points = np.array(result['points'])
-        points_result = np.array(result['points_result'])
+
+        points_result = np.array(result['points_result'], dtype=np.float32)
+        remains = points_result[..., 3:]
+        matrix = np.array([[0,-1,0],[1,0,0],[0,0,1]])
+        points_result = np.matmul(points_result[..., :3], matrix)
+        points_result = np.concatenate((points_result[..., :3], remains), axis=1)
         # 输出服务端的预测结果
-        points_result.tofile(out_dir + '/' + file_name + '.bin', dtype=np.float32)
+        print(points_result.shape)
+        points_result.tofile(out_dir + '/' + file_name + '.bin')
 
     else:
         print("请求失败")
         print("状态码：", response.status_code)
+
 
 if __name__ == '__main__':
     pcd_dir = './pointcloud/*.bin'

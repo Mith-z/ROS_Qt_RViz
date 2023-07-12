@@ -10,13 +10,17 @@
 #include <QVBoxLayout>
 #include <QtDebug>
 
+#include <OgreRenderWindow.h>
+#include <rviz/default_plugin/point_cloud2_display.h>
 #include <rviz/default_plugin/view_controllers/orbit_view_controller.h>
 #include <rviz/display.h>
 #include <rviz/display_group.h>
+#include <rviz/message_filter_display.h>
 #include <rviz/properties/property_tree_model.h>
 #include <rviz/render_panel.h>
 #include <rviz/tool.h>
 #include <rviz/tool_manager.h>
+#include <rviz/view_controller.h>
 #include <rviz/view_manager.h>
 #include <rviz/visualization_manager.h>
 
@@ -36,6 +40,12 @@ public:
   void RemoveDisplay(QString displayName);
 
   void Sub_Image();
+
+  rviz::DisplayGroup *getDisplayGroup() { return displayGroup; }
+  rviz::RenderPanel *getRenderPanel() { return renderPanel; }
+  rviz::VisualizationManager *getVisualizationManager() {
+    return visualManager;
+  }
 signals:
   void DisplayTreeModelSignal(QAbstractItemModel *model);
   void AddNewDisplaySignal(QString name);

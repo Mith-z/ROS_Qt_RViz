@@ -103,6 +103,6 @@ catkin_install_python(PROGRAMS ${PY_SOURCES}
 add_definitions(-DMY_SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_executable(${TARGET_NAME} ${QT_SOURCES} ${QT_RESOURCES_CPP} ${QT_FORMS_HPP} ${QT_MOC_HPP})
-target_link_libraries(${TARGET_NAME} ${QT_LIBRARIES} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} Qt5::Charts)
+target_link_libraries(${TARGET_NAME} ${QT_LIBRARIES} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} Qt5::Charts curl)
 install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 

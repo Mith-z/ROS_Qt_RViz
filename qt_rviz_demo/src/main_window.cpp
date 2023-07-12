@@ -2,7 +2,7 @@
 #include "../include/qt_rviz_demo/qrviz.h"
 #include "ui_main_window.h"
 #include <QDebug>
-#include <QtDebug>
+std::string FrontPcd_path;
 
 namespace qt_rviz_demo {
 
@@ -10,11 +10,50 @@ MainWindow::MainWindow(QWidget *parent, int argc, char *argv[])
     : QMainWindow(parent), ui(new Ui::MainWindow) {
   ui->setupUi(this);
 
-  // node = new NodeInfo(ui);
   node_ = new nodeinfo(ui, argc, argv);
   initUI();
   initRViz();
   Connects();
+
+  //  std::string front_lidar_topic;
+
+  //  nh_.param("front_lidar_topic", front_lidar_topic,
+  //            std::string("/rslidar_points"));
+  //  nh_.param(
+  //      "FrontPcd_path", FrontPcd_path,
+  //      std::string("/home/mith/catkin_qt/src/qt_rviz_demo/scripts/Lidar/"));
+  //  ros::Subscriber sub_cloud1 =
+  //      nh_.subscribe(front_lidar_topic, 100, FrontPoint_callback);
+  //  ros::MultiThreadedSpinner spinner(1);
+  //  spinner.spin();
+}
+
+void MainWindow::FrontPoint_callback(
+    const sensor_msgs::PointCloud2::ConstPtr &cloud_msg) {
+  ros::Time time = cloud_msg->header.stamp;
+  pcl::PointCloud<pcl::PointXYZI> tmp;
+  pcl::fromROSMsg(*cloud_msg, tmp);
+  double tt = time.toSec();
+
+  // save to pcd file
+  pcl::io::savePCDFileBinary(FrontPcd_path + std::to_string(tt) + ".pcd", tmp);
+  pcl::io::savePCDFileASCII(FrontPcd_path + std::to_string(tt) + ".pcd", tmp);
+  pcl::io::savePLYFile(FrontPcd_path + std::to_string(tt) + ".ply", tmp);
+  // save to bin file
+  std::ofstream out;
+  std::string save_filename = FrontPcd_path + std::to_string(tt) + ".bin";
+  out.open(save_filename, std::ios::out | std::ios::binary);
+  std::cout << save_filename << " saved" << std::endl;
+  int cloudSize = tmp.points.size();
+  for (int i = 0; i < cloudSize; ++i) {
+    float point_x = tmp.points[i].x;
+    float point_y = tmp.points[i].y;
+    float point_z = tmp.points[i].z;
+    out.write(reinterpret_cast<const char *>(&point_x), sizeof(float));
+    out.write(reinterpret_cast<const char *>(&point_y), sizeof(float));
+    out.write(reinterpret_cast<const char *>(&point_z), sizeof(float));
+  }
+  out.close();
 }
 
 void MainWindow::pythonTest() {
@@ -90,6 +129,8 @@ void MainWindow::initUI() {
   dataTimerThread = new QThread(this);
   InitPC2Model();
   ui->data_topic_comboBox->installEventFilter(this);
+
+  ui->displayTabWidget->setCurrentIndex(0);
 }
 
 /**
@@ -106,6 +147,10 @@ void MainWindow::initRViz() {
   value.insert("Color", QColor(160, 160, 160));
   value.insert("Plane Cell Count", 10);
   _qrviz->InitDisplayTreeModel("rviz/Grid", "Grid", true, value);
+
+  QMap<QString, QVariant> value1;
+  value1.insert("Topic", "/kitti_point_cloud_origin");
+  _qrviz->InitDisplayTreeModel("rviz/PointCloud2", "pc2", true, value1);
 }
 
 /**
@@ -160,6 +205,10 @@ void MainWindow::Connects() {
           SIGNAL(ChooseDisplaySignal(QTreeWidgetItem *, QString)), this,
           SLOT(AddNewDisplaySlot(QTreeWidgetItem *, QString)));
 
+  // toolbar
+  connect(ui->pause_action, SIGNAL(triggered(bool)), this,
+          SLOT(PauseActionClickedSlot()));
+
   // camera
   connect(ui->cam_update_Btn, SIGNAL(clicked(bool)), this,
           SLOT(updateTopicList()));
@@ -175,6 +224,10 @@ void MainWindow::Connects() {
   // data treeview
   connect(ui->data_topic_comboBox, SIGNAL(currentIndexChanged(QString)), this,
           SLOT(DataTopicChangedSlot(QString)));
+
+  //模型
+  connect(ui->detect_Btn, SIGNAL(clicked(bool)), this, SLOT(DeteceBtnSlot()));
+  connect(ui->publish_Btn, SIGNAL(clicked(bool)), this, SLOT(PublishBtnSlot()));
 }
 
 /**
@@ -233,6 +286,87 @@ void MainWindow::OnInfoUpdateBtnClickedSlot() {
   system("rosrun rqt_top rqt_top");
 }
 
+//工具栏slot
+void MainWindow::PauseActionClickedSlot() {
+  QString fixedFrame = _qrviz->getVisualizationManager()->getFixedFrame();
+  if (ui->pause_action->text() == "暂停") {
+    ui->pause_action->setText("播放");
+
+    _qrviz->getVisualizationManager()->getFrameManager()->setFixedFrame("");
+
+  } else {
+    ui->pause_action->setText("暂停");
+
+    _qrviz->getVisualizationManager()->getFrameManager()->setFixedFrame(
+        fixedFrame.toStdString());
+
+    rviz::DisplayGroup *displayGroup = _qrviz->getDisplayGroup();
+    rviz::Display *display;
+    for (int i = 0; i < displayGroup->numDisplays(); i++) {
+      display = _qrviz->getDisplayGroup()->getDisplayAt(i);
+      if (display->getClassId() == "rviz/PointCloud2" && display->isEnabled()) {
+        display->setEnabled(false);
+        display->setEnabled(true);
+      }
+    }
+  }
+}
+
+void MainWindow::DeteceBtnSlot() {
+  //  Py_Initialize();
+  //  PyRun_SimpleString("import sys");
+  //  PyRun_SimpleString(
+  //      "sys.path.append('/home/mith/catkin_qt/src/qt_rviz_demo/scripts')");
+
+  //  PyObject *pModule = PyImport_ImportModule("mmdet3d_client");
+  //  if (pModule == NULL) {
+  //    PyErr_Print();
+  //    qDebug("cannot find module");
+  //  }
+
+  //  PyObject *pFunc = PyObject_GetAttrString(pModule, "func");
+  //  if (pFunc == NULL) {
+  //    PyErr_Print();
+  //    qDebug("cannot find function");
+  //  }
+
+  //  PyObject *pRet = PyObject_CallObject(pFunc, NULL);
+
+  //  Py_Finalize();
+}
+
+void MainWindow::PublishBtnSlot() {
+  //  Py_Initialize();
+  //  PyRun_SimpleString("import sys");
+  //  PyRun_SimpleString(
+  //      "sys.path.append('/home/mith/catkin_qt/src/qt_rviz_demo/scripts')");
+
+  //  PyObject *pModule = PyImport_ImportModule("AllNodesInfo");
+  //  if (pModule == NULL) {
+  //    PyErr_Print();
+  //    qDebug("cannot find module");
+  //  }
+
+  //  PyObject *pFunc = PyObject_GetAttrString(pModule, "pcl_publish");
+  //  if (pFunc == NULL) {
+  //    PyErr_Print();
+  //    qDebug("cannot find function");
+  //  }
+
+  //  PyObject *pRet = PyObject_CallObject(pFunc, NULL);
+
+  //  Py_Finalize();
+}
+
+void MainWindow::run_python_code(PyObject *callback) {
+  Py_Initialize();
+
+  // call the Python function
+  PyObject_CallObject(callback, NULL);
+
+  Py_Finalize();
+}
+
 void MainWindow::DataTopicChangedSlot(QString topicName) {
   OnDataTopicChanged(topicName);
 }
@@ -259,7 +393,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
 // data tree view
 template <typename T> QString MainWindow::typeToString(T type) {
   std::stringstream hexNumber;
-  hexNumber << std::setiosflags(ios::uppercase) << std::hex
+  hexNumber << std::setiosflags(std::ios::uppercase) << std::hex
             << type; //大写十六进制
   std::string result = hexNumber.str();
   return QString::fromStdString(result);
@@ -344,7 +478,7 @@ void MainWindow::OnDataTopicChanged(QString topicName) {
     try {
       connect(dataTimerThread, SIGNAL(started()), dataTimer, SLOT(start()));
       connect(dataTimerThread, SIGNAL(finished()), dataTimer, SLOT(stop()));
-    } catch (exception e) {
+    } catch (std::exception e) {
     }
 
     dataTimerThread->start();
@@ -475,8 +609,8 @@ QSet<QString> MainWindow::getTopics(const QSet<QString> &message_types,
         if (all_topics.contains(topic + "/" + *jt)) {
           QString sub = topic + " " + *jt;
           topics.insert(sub);
-          // qDebug("ImageView::getTopics() transport specific sub-topic '%s'",
-          // sub.toStdString().c_str());
+          // qDebug("ImageView::getTopics() transport specific sub-topic
+          // '%s'", sub.toStdString().c_str());
         }
       }
     }
