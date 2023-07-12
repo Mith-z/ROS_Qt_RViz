@@ -287,6 +287,9 @@ void MainWindow::OnInfoUpdateBtnClickedSlot() {
 }
 
 //工具栏slot
+/**
+ * @brief slot 暂停接受点云，画面停在当前帧
+ */
 void MainWindow::PauseActionClickedSlot() {
   QString fixedFrame = _qrviz->getVisualizationManager()->getFixedFrame();
   if (ui->pause_action->text() == "暂停") {
