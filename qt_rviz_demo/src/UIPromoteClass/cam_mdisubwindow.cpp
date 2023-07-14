@@ -8,8 +8,6 @@ CamMdiSubWindow::CamMdiSubWindow(QWidget *parent) : QMdiSubWindow(parent) {
 
   camWidget = new QWidget();
   camTopicWidget = new QWidget();
-  //  camWidget->setContentsMargins(0, 0, 0, 0);
-  //  camTopicWidget->setContentsMargins(0, 0, 0, 0);
 
   topicLabel = new QLabel();
 
