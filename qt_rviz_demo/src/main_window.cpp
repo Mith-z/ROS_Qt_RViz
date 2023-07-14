@@ -1,8 +1,8 @@
 #include "../include/qt_rviz_demo/main_window.hpp"
 #include "../include/qt_rviz_demo/qrviz.h"
 #include "ui_main_window.h"
-#include <QDebug>
-std::string FrontPcd_path;
+
+// std::string FrontPcd_path;
 
 namespace qt_rviz_demo {
 
@@ -28,33 +28,34 @@ MainWindow::MainWindow(QWidget *parent, int argc, char *argv[])
   //  spinner.spin();
 }
 
-void MainWindow::FrontPoint_callback(
-    const sensor_msgs::PointCloud2::ConstPtr &cloud_msg) {
-  ros::Time time = cloud_msg->header.stamp;
-  pcl::PointCloud<pcl::PointXYZI> tmp;
-  pcl::fromROSMsg(*cloud_msg, tmp);
-  double tt = time.toSec();
+// void MainWindow::FrontPoint_callback(
+//    const sensor_msgs::PointCloud2::ConstPtr &cloud_msg) {
+//  ros::Time time = cloud_msg->header.stamp;
+//  pcl::PointCloud<pcl::PointXYZI> tmp;
+//  pcl::fromROSMsg(*cloud_msg, tmp);
+//  double tt = time.toSec();
 
-  // save to pcd file
-  pcl::io::savePCDFileBinary(FrontPcd_path + std::to_string(tt) + ".pcd", tmp);
-  pcl::io::savePCDFileASCII(FrontPcd_path + std::to_string(tt) + ".pcd", tmp);
-  pcl::io::savePLYFile(FrontPcd_path + std::to_string(tt) + ".ply", tmp);
-  // save to bin file
-  std::ofstream out;
-  std::string save_filename = FrontPcd_path + std::to_string(tt) + ".bin";
-  out.open(save_filename, std::ios::out | std::ios::binary);
-  std::cout << save_filename << " saved" << std::endl;
-  int cloudSize = tmp.points.size();
-  for (int i = 0; i < cloudSize; ++i) {
-    float point_x = tmp.points[i].x;
-    float point_y = tmp.points[i].y;
-    float point_z = tmp.points[i].z;
-    out.write(reinterpret_cast<const char *>(&point_x), sizeof(float));
-    out.write(reinterpret_cast<const char *>(&point_y), sizeof(float));
-    out.write(reinterpret_cast<const char *>(&point_z), sizeof(float));
-  }
-  out.close();
-}
+//  // save to pcd file
+//  pcl::io::savePCDFileBinary(FrontPcd_path + std::to_string(tt) + ".pcd",
+//  tmp); pcl::io::savePCDFileASCII(FrontPcd_path + std::to_string(tt) + ".pcd",
+//  tmp); pcl::io::savePLYFile(FrontPcd_path + std::to_string(tt) + ".ply",
+//  tmp);
+//  // save to bin file
+//  std::ofstream out;
+//  std::string save_filename = FrontPcd_path + std::to_string(tt) + ".bin";
+//  out.open(save_filename, std::ios::out | std::ios::binary);
+//  std::cout << save_filename << " saved" << std::endl;
+//  int cloudSize = tmp.points.size();
+//  for (int i = 0; i < cloudSize; ++i) {
+//    float point_x = tmp.points[i].x;
+//    float point_y = tmp.points[i].y;
+//    float point_z = tmp.points[i].z;
+//    out.write(reinterpret_cast<const char *>(&point_x), sizeof(float));
+//    out.write(reinterpret_cast<const char *>(&point_y), sizeof(float));
+//    out.write(reinterpret_cast<const char *>(&point_z), sizeof(float));
+//  }
+//  out.close();
+//}
 
 void MainWindow::pythonTest() {
   Py_Initialize();
@@ -112,10 +113,15 @@ void MainWindow::initUI() {
   }
 
   // camera
-  camTopicComboBox.append(ui->cam1_topic_comboBox);
-  camTopicComboBox.append(ui->cam2_topic_comboBox);
-  camTopicComboBox.append(ui->cam3_topic_comboBox);
-  camTopicComboBox.append(ui->cam4_topic_comboBox);
+  //  camWidgets.append(ui->camera_1_widget);
+  //  camWidgets.append(ui->camera_2_widget);
+  //  camWidgets.append(ui->camera_3_widget);
+  //  camWidgets.append(ui->camera_4_widget);
+
+  //  camTopicComboBox.append(ui->cam1_topic_comboBox);
+  //  camTopicComboBox.append(ui->cam2_topic_comboBox);
+  //  camTopicComboBox.append(ui->cam3_topic_comboBox);
+  //  camTopicComboBox.append(ui->cam4_topic_comboBox);
 
   ui->cam_update_Btn->setIcon(QIcon("://images/refreash.png"));
 
@@ -123,6 +129,10 @@ void MainWindow::initUI() {
   camSubcribers.append(subscriber_cam2);
   camSubcribers.append(subscriber_cam3);
   camSubcribers.append(subscriber_cam4);
+
+  mdiArea = new QMdiArea(this); // 创建中央部件 QMdiArea
+  ui->camera_widget->layout()->addWidget(mdiArea);
+
   // data
   emptyModel = new QStandardItemModel();
   dataTimer = new QTimer();
@@ -181,7 +191,7 @@ void MainWindow::initializeDockWidgets() {
   //设置初始大小
   this->resizeDocks({typeDock, infoDock, dataDock}, {288, 288, 280},
                     Qt::Horizontal);
-  this->resizeDocks({typeDock, infoDock, cameraDock}, {300, 200, 175},
+  this->resizeDocks({typeDock, infoDock, cameraDock}, {300, 200, 225},
                     Qt::Vertical);
 
   //合并
@@ -212,14 +222,16 @@ void MainWindow::Connects() {
   // camera
   connect(ui->cam_update_Btn, SIGNAL(clicked(bool)), this,
           SLOT(updateTopicList()));
-  connect(ui->cam1_topic_comboBox, SIGNAL(currentIndexChanged(int)), this,
-          SLOT(Cam1TopicChangedSlot(int)));
-  connect(ui->cam2_topic_comboBox, SIGNAL(currentIndexChanged(int)), this,
-          SLOT(Cam2TopicChangedSlot(int)));
-  connect(ui->cam3_topic_comboBox, SIGNAL(currentIndexChanged(int)), this,
-          SLOT(Cam3TopicChangedSlot(int)));
-  connect(ui->cam4_topic_comboBox, SIGNAL(currentIndexChanged(int)), this,
-          SLOT(Cam4TopicChangedSlot(int)));
+  connect(ui->cam_add_Btn, SIGNAL(clicked(bool)), this,
+          SLOT(OnAddCamBtnClickedSlot()));
+  //  connect(ui->cam1_topic_comboBox, SIGNAL(currentIndexChanged(int)), this,
+  //          SLOT(Cam1TopicChangedSlot(int)));
+  //  connect(ui->cam2_topic_comboBox, SIGNAL(currentIndexChanged(int)), this,
+  //          SLOT(Cam2TopicChangedSlot(int)));
+  //  connect(ui->cam3_topic_comboBox, SIGNAL(currentIndexChanged(int)), this,
+  //          SLOT(Cam3TopicChangedSlot(int)));
+  //  connect(ui->cam4_topic_comboBox, SIGNAL(currentIndexChanged(int)), this,
+  //          SLOT(Cam4TopicChangedSlot(int)));
 
   // data treeview
   connect(ui->data_topic_comboBox, SIGNAL(currentIndexChanged(QString)), this,
@@ -270,16 +282,16 @@ void MainWindow::AddNewDisplaySlot(QTreeWidgetItem *newDisplay, QString name) {
  * @param camera的combobox指数
  */
 void MainWindow::Cam1TopicChangedSlot(int index) {
-  OnCamTopicChanged(ui->cam1_topic_comboBox, ui->cam1_frame, index, 1);
+  // OnCamTopicChanged(ui->cam1_topic_comboBox, ui->cam1_frame, index, 1);
 }
 void MainWindow::Cam2TopicChangedSlot(int index) {
-  OnCamTopicChanged(ui->cam2_topic_comboBox, ui->cam2_frame, index, 2);
+  // OnCamTopicChanged(ui->cam2_topic_comboBox, ui->cam2_frame, index, 2);
 }
 void MainWindow::Cam3TopicChangedSlot(int index) {
-  OnCamTopicChanged(ui->cam3_topic_comboBox, ui->cam3_frame, index, 3);
+  // OnCamTopicChanged(ui->cam3_topic_comboBox, ui->cam3_frame, index, 3);
 }
 void MainWindow::Cam4TopicChangedSlot(int index) {
-  OnCamTopicChanged(ui->cam4_topic_comboBox, ui->cam4_frame, index, 4);
+  // OnCamTopicChanged(ui->cam4_topic_comboBox, ui->cam4_frame, index, 4);
 }
 
 void MainWindow::OnInfoUpdateBtnClickedSlot() {
@@ -516,9 +528,41 @@ void MainWindow::UpdatePC2Data() {
 
 // camera
 /**
+ * @brief MainWindow::OnAddCamBtnClickedSlot
+ */
+void MainWindow::OnAddCamBtnClickedSlot() {
+  CamMdiSubWindow *newSubWindow = new CamMdiSubWindow;
+  mdiArea->addSubWindow(newSubWindow);
+  newSubWindow->show();
+
+  connect(newSubWindow->topicComboBox,
+          QOverload<int>::of(&QComboBox::currentIndexChanged),
+          [=](int index) { CamTopicChanged(newSubWindow, index); });
+
+  qDebug() << "add" << mdiArea->subWindowList().size();
+}
+
+/**
  * @brief 更新image话题列表
  */
 void MainWindow::updateTopicList() {
+
+  if (!camTopicComboBox.isEmpty())
+    camTopicComboBox.clear();
+  if (!camSubWindows.isEmpty())
+    camSubWindows.clear();
+
+  foreach (QMdiSubWindow *subwindow, mdiArea->subWindowList()) {
+    camSubWindows.append(qobject_cast<CamMdiSubWindow *>(subwindow));
+  }
+
+  for (QList<CamMdiSubWindow *>::const_iterator it = camSubWindows.constBegin();
+       it != camSubWindows.constEnd(); it++) {
+    camTopicComboBox.append((*it)->topicComboBox);
+  }
+  qDebug() << camTopicComboBox.size();
+  qDebug() << camSubWindows.size();
+
   QSet<QString> message_types;
   message_types.insert("sensor_msgs/Image");
   QSet<QString> message_sub_types;
@@ -677,6 +721,34 @@ void MainWindow::OnCamTopicChanged(QComboBox *comboBox,
       camSubcribers[camSub - 1] = it.subscribe(
           topic.toStdString(), 1,
           boost::bind(&MainWindow::callbackImage, this, _1, frame));
+    } catch (image_transport::TransportLoadException &e) {
+      ROS_ERROR("%s", (std::string("Error: ") + e.what()).c_str());
+    }
+  }
+}
+
+void MainWindow::CamTopicChanged(CamMdiSubWindow *camWindow, int index) {
+  conversion_mat_.release();
+
+  camWindow->camSubscriber.shutdown();
+
+  // reset image on topic change
+  camWindow->camFrame->resize(camWindow->camFrame->size());
+  camWindow->camFrame->setImage(QImage());
+
+  QStringList parts =
+      camWindow->topicComboBox->itemData(index).toString().split(" ");
+  QString topic = parts.first();
+  QString transport = parts.length() == 2 ? parts.last() : "raw";
+
+  if (!topic.isEmpty()) {
+    image_transport::ImageTransport it(nh_);
+    image_transport::TransportHints hints(transport.toStdString());
+    try {
+      camWindow->camSubscriber =
+          it.subscribe(topic.toStdString(), 1,
+                       boost::bind(&MainWindow::callbackImage, this, _1,
+                                   camWindow->camFrame));
     } catch (image_transport::TransportLoadException &e) {
       ROS_ERROR("%s", (std::string("Error: ") + e.what()).c_str());
     }

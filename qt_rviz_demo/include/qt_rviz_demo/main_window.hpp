@@ -2,53 +2,38 @@
 #define MAINWINDOW_H
 
 #include "PointcloudPublish/pointcloud_pub.h"
+#include "UIPromoteClass/cam_mdisubwindow.h"
 #include "UIPromoteClass/ratio_layouted_frame.h"
 #include "adddisplay.h"
 #include "nodeinfo.h"
 #include "qrviz.h"
 
-#include <QAbstractItemModel>
-#include <QComboBox>
-#include <QGraphicsPixmapItem>
-#include <QMainWindow>
-#include <QMessageBox>
-#include <QProcess>
-#include <QResizeEvent>
-#include <QSettings>
-#include <QVariant>
+//#include <QAbstractItemModel>
+//#include <QComboBox>
+//#include <QGraphicsPixmapItem>
+//#include <QMainWindow>
+//#include <QMdiArea>
+//#include <QMdiSubWindow>
+//#include <QMessageBox>
+//#include <QProcess>
+//#include <QResizeEvent>
+//#include <QSettings>
+//#include <QVariant>
+#include <QtWidgets>
 
 #include <boost/bind.hpp>
 #include <cv.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
-#include <iomanip>
-#include <iostream>
 #include <nodelet/nodelet.h>
 #include <ros/macros.h>
 #include <ros/master.h>
 #include <ros/package.h>
-#include <rqt_gui_cpp/plugin.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
 
 #include <Python.h>
-#include <curl/curl.h>
 #include <thread>
-
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <nav_msgs/Odometry.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/io/io.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/io/ply_io.h>
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <sstream>
-#include <string>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -70,11 +55,10 @@ public:
   void initUI();
   void initializeDockWidgets();
   void initRViz();
-
   void Connects();
 
-  static void
-  FrontPoint_callback(const sensor_msgs::PointCloud2::ConstPtr &cloud_msg);
+  //  static void
+  //  FrontPoint_callback(const sensor_msgs::PointCloud2::ConstPtr &cloud_msg);
 
 public slots:
   void GetRVizTreeModelSlot(QAbstractItemModel *model);
@@ -84,8 +68,8 @@ public slots:
   void OnInfoUpdateBtnClickedSlot();
   // void CameraCheckBoxSlot();
 
+  void OnAddCamBtnClickedSlot();
   void updateTopicList();
-
   void Cam1TopicChangedSlot(int index);
   void Cam2TopicChangedSlot(int index);
   void Cam3TopicChangedSlot(int index);
@@ -113,6 +97,8 @@ protected:
   void OnCamTopicChanged(QComboBox *comboBox,
                          rqt_image_view::RatioLayoutedFrame *frame, int index,
                          int camSub);
+  void CamTopicChanged(CamMdiSubWindow *camWindow, int index);
+
   void callbackImage(const sensor_msgs::Image::ConstPtr &msg,
                      rqt_image_view::RatioLayoutedFrame *frame);
 
@@ -154,7 +140,10 @@ private:
   QAbstractItemModel *modelRvizDisplay;
   AddDisplay *addDisplayPanel;
   QList<QAction *> toolBarActions;
+  QList<QWidget *> camWidgets;
+  QMdiArea *mdiArea;
   QList<QComboBox *> camTopicComboBox;
+  QList<CamMdiSubWindow *> camSubWindows;
   QList<image_transport::Subscriber> camSubcribers;
 
   image_transport::Subscriber subscriber_cam1;

@@ -40,7 +40,6 @@ public:
   void RemoveDisplay(QString displayName);
 
   void Sub_Image();
-
   rviz::DisplayGroup *getDisplayGroup() { return displayGroup; }
   rviz::RenderPanel *getRenderPanel() { return renderPanel; }
   rviz::VisualizationManager *getVisualizationManager() {

@@ -17,6 +17,7 @@ int main(int argc, char *argv[]) {
   ros::NodeHandle nh;
 
   qt_rviz_demo::MainWindow w(nullptr, argc, argv);
+  w.setObjectName("mymainwindow");
   w.show();
 
   return a.exec();
