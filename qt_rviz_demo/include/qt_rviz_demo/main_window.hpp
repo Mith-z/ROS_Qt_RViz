@@ -69,6 +69,8 @@ public slots:
   // void CameraCheckBoxSlot();
 
   void OnAddCamBtnClickedSlot();
+  void OnResizeCamBtnClickedSlot();
+  void OnCamComboBoxClickedSlot(CamMdiSubWindow *subwindow);
   void updateTopicList();
   void Cam1TopicChangedSlot(int index);
   void Cam2TopicChangedSlot(int index);
@@ -144,12 +146,6 @@ private:
   QMdiArea *mdiArea;
   QList<QComboBox *> camTopicComboBox;
   QList<CamMdiSubWindow *> camSubWindows;
-  QList<image_transport::Subscriber> camSubcribers;
-
-  image_transport::Subscriber subscriber_cam1;
-  image_transport::Subscriber subscriber_cam2;
-  image_transport::Subscriber subscriber_cam3;
-  image_transport::Subscriber subscriber_cam4;
   // data
   QStandardItemModel *emptyModel;
   QStandardItemModel *pc2Model;

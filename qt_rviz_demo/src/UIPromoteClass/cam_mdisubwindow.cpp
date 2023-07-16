@@ -32,6 +32,7 @@ CamMdiSubWindow::CamMdiSubWindow(QWidget *parent) : QMdiSubWindow(parent) {
   camWidget_layout->setContentsMargins(0, 0, 0, 0);
 
   this->setWidget(camWidget);
+
   this->resize(300, 200);
 }
 
@@ -46,6 +47,7 @@ CamMdiSubWindow::~CamMdiSubWindow() {}
 bool CamMdiSubWindow::eventFilter(QObject *watched, QEvent *event) {
   if (event->type() == QEvent::MouseButtonPress) {
     if (watched == topicComboBox) {
+      emit comboBoxClicked();
     }
   }
   return QMdiSubWindow::eventFilter(watched, event);

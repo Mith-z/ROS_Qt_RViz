@@ -14,6 +14,7 @@ public:
 
 signals:
   void closed();
+  void comboBoxClicked();
 
 protected:
   bool eventFilter(QObject *watched, QEvent *event);

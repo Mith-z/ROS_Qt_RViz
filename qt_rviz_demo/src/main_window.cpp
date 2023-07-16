@@ -125,14 +125,15 @@ void MainWindow::initUI() {
 
   ui->cam_update_Btn->setIcon(QIcon("://images/refreash.png"));
 
-  camSubcribers.append(subscriber_cam1);
-  camSubcribers.append(subscriber_cam2);
-  camSubcribers.append(subscriber_cam3);
-  camSubcribers.append(subscriber_cam4);
+  //  camSubcribers.append(subscriber_cam1);
+  //  camSubcribers.append(subscriber_cam2);
+  //  camSubcribers.append(subscriber_cam3);
+  //  camSubcribers.append(subscriber_cam4);
 
-  mdiArea = new QMdiArea(this); // 创建中央部件 QMdiArea
+  mdiArea = new QMdiArea(ui->camera_widget); // 创建中央部件 QMdiArea
   ui->camera_widget->layout()->addWidget(mdiArea);
-
+  mdiArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+  mdiArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
   // data
   emptyModel = new QStandardItemModel();
   dataTimer = new QTimer();
@@ -224,6 +225,8 @@ void MainWindow::Connects() {
           SLOT(updateTopicList()));
   connect(ui->cam_add_Btn, SIGNAL(clicked(bool)), this,
           SLOT(OnAddCamBtnClickedSlot()));
+  connect(ui->cam_resize_Btn, SIGNAL(clicked(bool)), this,
+          SLOT(OnResizeCamBtnClickedSlot()));
   //  connect(ui->cam1_topic_comboBox, SIGNAL(currentIndexChanged(int)), this,
   //          SLOT(Cam1TopicChangedSlot(int)));
   //  connect(ui->cam2_topic_comboBox, SIGNAL(currentIndexChanged(int)), this,
@@ -539,14 +542,69 @@ void MainWindow::OnAddCamBtnClickedSlot() {
           QOverload<int>::of(&QComboBox::currentIndexChanged),
           [=](int index) { CamTopicChanged(newSubWindow, index); });
 
+  connect(newSubWindow, &CamMdiSubWindow::comboBoxClicked, [=]() {
+    QComboBox *comboBox = newSubWindow->topicComboBox;
+    comboBox->clear();
+    comboBox->addItem("");
+
+    QMap<QString, QString> all_topics = GetAllTopicsAndTypes();
+
+    QMap<QString, QString>::const_iterator i = all_topics.constBegin();
+    while (i != all_topics.constEnd()) {
+      if (i.value() == "sensor_msgs/Image" ||
+          i.value() == "sensor_msgs/CompressedImage" ||
+          i.value() == "sensor_msgs/CameraInfo") {
+        comboBox->addItem(i.key());
+      }
+      ++i;
+    }
+  });
+
   qDebug() << "add" << mdiArea->subWindowList().size();
+}
+
+/**
+ * @brief MainWindow::OnResizeCamBtnClickedSlot
+ */
+void MainWindow::OnResizeCamBtnClickedSlot() {
+  if (mdiArea->subWindowList().isEmpty())
+    return;
+
+  int subwindowWidth = mdiArea->size().width() / 4;
+  int subwindowHeight = mdiArea->size().height();
+  for (QMdiSubWindow *subwindow : mdiArea->subWindowList()) {
+    subwindow->resize(subwindowWidth, subwindowHeight);
+  }
+  for (int i = 0; i < mdiArea->subWindowList().size(); i++) {
+    mdiArea->subWindowList()[i]->setGeometry(i % 4 * subwindowWidth,
+                                             i / 4 * subwindowHeight,
+                                             subwindowWidth, subwindowHeight);
+  }
+  // mdiArea->tileSubWindows();
+}
+
+void MainWindow::OnCamComboBoxClickedSlot(CamMdiSubWindow *subwindow) {
+  QComboBox *comboBox = subwindow->topicComboBox;
+
+  comboBox->clear();
+
+  QMap<QString, QString> all_topics = GetAllTopicsAndTypes();
+
+  QMap<QString, QString>::const_iterator i = all_topics.constBegin();
+  while (i != all_topics.constEnd()) {
+    if (i.value() == "sensor_msgs/Image" ||
+        i.value() == "sensor_msgs/CompressedImage" ||
+        i.value() == "sensor_msgs/CameraInfo") {
+      comboBox->addItem(i.key());
+    }
+    ++i;
+  }
 }
 
 /**
  * @brief 更新image话题列表
  */
 void MainWindow::updateTopicList() {
-
   if (!camTopicComboBox.isEmpty())
     camTopicComboBox.clear();
   if (!camSubWindows.isEmpty())
@@ -560,8 +618,6 @@ void MainWindow::updateTopicList() {
        it != camSubWindows.constEnd(); it++) {
     camTopicComboBox.append((*it)->topicComboBox);
   }
-  qDebug() << camTopicComboBox.size();
-  qDebug() << camSubWindows.size();
 
   QSet<QString> message_types;
   message_types.insert("sensor_msgs/Image");
@@ -702,39 +758,43 @@ void MainWindow::selectTopic(QComboBox *comboBox, const QString &topic) {
 void MainWindow::OnCamTopicChanged(QComboBox *comboBox,
                                    rqt_image_view::RatioLayoutedFrame *frame,
                                    int index, int camSub) {
-  conversion_mat_.release();
+  //  conversion_mat_.release();
 
-  camSubcribers[camSub - 1].shutdown();
+  //  camSubcribers[camSub - 1].shutdown();
 
-  // reset image on topic change
-  frame->resize(frame->size());
-  frame->setImage(QImage());
+  //  // reset image on topic change
+  //  frame->resize(frame->size());
+  //  frame->setImage(QImage());
 
-  QStringList parts = comboBox->itemData(index).toString().split(" ");
-  QString topic = parts.first();
-  QString transport = parts.length() == 2 ? parts.last() : "raw";
+  //  QStringList parts = comboBox->itemData(index).toString().split(" ");
+  //  QString topic = parts.first();
+  //  QString transport = parts.length() == 2 ? parts.last() : "raw";
 
-  if (!topic.isEmpty()) {
-    image_transport::ImageTransport it(nh_);
-    image_transport::TransportHints hints(transport.toStdString());
-    try {
-      camSubcribers[camSub - 1] = it.subscribe(
-          topic.toStdString(), 1,
-          boost::bind(&MainWindow::callbackImage, this, _1, frame));
-    } catch (image_transport::TransportLoadException &e) {
-      ROS_ERROR("%s", (std::string("Error: ") + e.what()).c_str());
-    }
-  }
+  //  if (!topic.isEmpty()) {
+  //    image_transport::ImageTransport it(nh_);
+  //    image_transport::TransportHints hints(transport.toStdString());
+  //    try {
+  //      camSubcribers[camSub - 1] = it.subscribe(
+  //          topic.toStdString(), 1,
+  //          boost::bind(&MainWindow::callbackImage, this, _1, frame));
+  //    } catch (image_transport::TransportLoadException &e) {
+  //      ROS_ERROR("%s", (std::string("Error: ") + e.what()).c_str());
+  //    }
+  //  }
 }
 
 void MainWindow::CamTopicChanged(CamMdiSubWindow *camWindow, int index) {
   conversion_mat_.release();
-
   camWindow->camSubscriber.shutdown();
 
   // reset image on topic change
   camWindow->camFrame->resize(camWindow->camFrame->size());
   camWindow->camFrame->setImage(QImage());
+
+  //  for (int i = 0; i < camWindow->topicComboBox->count(); i++) {
+  //    qDebug() << camWindow->topicComboBox->itemText(i);
+  //  }
+  std::cout << camWindow->topicComboBox->itemText(index).toStdString() << endl;
 
   QStringList parts =
       camWindow->topicComboBox->itemData(index).toString().split(" ");
@@ -745,10 +805,11 @@ void MainWindow::CamTopicChanged(CamMdiSubWindow *camWindow, int index) {
     image_transport::ImageTransport it(nh_);
     image_transport::TransportHints hints(transport.toStdString());
     try {
-      camWindow->camSubscriber =
-          it.subscribe(topic.toStdString(), 1,
-                       boost::bind(&MainWindow::callbackImage, this, _1,
-                                   camWindow->camFrame));
+      camWindow->camSubscriber = it.subscribe(
+          camWindow->topicComboBox->itemText(index).toStdString(), 1,
+          boost::bind(&MainWindow::callbackImage, this, _1,
+                      camWindow->camFrame));
+
     } catch (image_transport::TransportLoadException &e) {
       ROS_ERROR("%s", (std::string("Error: ") + e.what()).c_str());
     }

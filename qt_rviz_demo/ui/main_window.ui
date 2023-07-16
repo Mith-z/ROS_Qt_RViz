@@ -17,7 +17,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_7">
+   <layout class="QVBoxLayout" name="verticalLayout_4">
     <item>
      <widget class="QTabWidget" name="displayTabWidget">
       <property name="sizePolicy">
@@ -287,6 +287,13 @@
             <widget class="QPushButton" name="cam_update_Btn">
              <property name="text">
               <string/>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="cam_resize_Btn">
+             <property name="text">
+              <string>重设大小</string>
              </property>
             </widget>
            </item>
