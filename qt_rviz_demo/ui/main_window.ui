@@ -147,6 +147,7 @@
    <addaction name="camera_focus_action"/>
    <addaction name="separator"/>
    <addaction name="pause_action"/>
+   <addaction name="record_action"/>
   </widget>
   <widget class="QDockWidget" name="typeDock">
    <property name="sizePolicy">
@@ -577,6 +578,14 @@
    </property>
    <property name="toolTip">
     <string>暂停播放点云</string>
+   </property>
+  </action>
+  <action name="record_action">
+   <property name="text">
+    <string>录制</string>
+   </property>
+   <property name="toolTip">
+    <string>录制话题</string>
    </property>
   </action>
  </widget>

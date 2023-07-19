@@ -29,12 +29,18 @@ find_package(catkin REQUIRED COMPONENTS rviz roscpp rospy sensor_msgs
     std_msgs
     image_transport
     pcl_ros
+    rosbag
     )
 
 set(PCL_INCLUDE_DIRS /usr/include/pcl-1.8)
 find_package(PCL 1.8 REQUIRED)
 include_directories(include${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
+
+find_package(Boost REQUIRED QUIET)
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
+
 
 #set(OpenCV_DIR /usr/share/OpenCV)
 #message(STATUS "version: ${OpenCV_VERSION}")
@@ -103,6 +109,6 @@ catkin_install_python(PROGRAMS ${PY_SOURCES}
 add_definitions(-DMY_SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_executable(${TARGET_NAME} ${QT_SOURCES} ${QT_RESOURCES_CPP} ${QT_FORMS_HPP} ${QT_MOC_HPP})
-target_link_libraries(${TARGET_NAME} ${QT_LIBRARIES} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} Qt5::Charts curl)
+target_link_libraries(${TARGET_NAME} ${QT_LIBRARIES} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Boost_LIBRARIES} Qt5::Charts curl)
 install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 

@@ -7,20 +7,11 @@
 #include "adddisplay.h"
 #include "nodeinfo.h"
 #include "qrviz.h"
+#include "record_rosbag.h"
 
-//#include <QAbstractItemModel>
-//#include <QComboBox>
-//#include <QGraphicsPixmapItem>
-//#include <QMainWindow>
-//#include <QMdiArea>
-//#include <QMdiSubWindow>
-//#include <QMessageBox>
-//#include <QProcess>
-//#include <QResizeEvent>
-//#include <QSettings>
-//#include <QVariant>
 #include <QtWidgets>
 
+#include <Python.h>
 #include <boost/bind.hpp>
 #include <cv.h>
 #include <cv_bridge/cv_bridge.h>
@@ -29,10 +20,11 @@
 #include <ros/macros.h>
 #include <ros/master.h>
 #include <ros/package.h>
+#include <rosbag/bag.h>
+#include <rosbag/view.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
-
-#include <Python.h>
+#include <std_msgs/String.h>
 #include <thread>
 
 QT_BEGIN_NAMESPACE
@@ -65,17 +57,12 @@ public slots:
   void OnAddDisplayBtnClickedSlot();
   void AddNewDisplaySlot(QTreeWidgetItem *newDisplay, QString name);
   void OnRemoveDisplayBtnClickedSlot();
-  void OnInfoUpdateBtnClickedSlot();
+
   // void CameraCheckBoxSlot();
 
   void OnAddCamBtnClickedSlot();
   void OnResizeCamBtnClickedSlot();
   void OnCamComboBoxClickedSlot(CamMdiSubWindow *subwindow);
-  void updateTopicList();
-  void Cam1TopicChangedSlot(int index);
-  void Cam2TopicChangedSlot(int index);
-  void Cam3TopicChangedSlot(int index);
-  void Cam4TopicChangedSlot(int index);
 
   void DataTopicChangedSlot(QString topicName);
   void UpdatePC2Data();
@@ -83,6 +70,7 @@ public slots:
 
   //工具栏
   void PauseActionClickedSlot();
+  void RecordActionClickedSlot();
 
   //模型
   void DeteceBtnSlot();
@@ -92,17 +80,18 @@ public slots:
 
 protected:
   // camera
-  QSet<QString> getTopics(const QSet<QString> &message_types,
+  QSet<QString> GetTopics(const QSet<QString> &message_types,
                           const QSet<QString> &message_sub_types,
                           const QList<QString> &transports);
-  void selectTopic(QComboBox *comboBox, const QString &topic);
-  void OnCamTopicChanged(QComboBox *comboBox,
-                         rqt_image_view::RatioLayoutedFrame *frame, int index,
-                         int camSub);
+  void SelectTopic(QComboBox *comboBox, const QString &topic);
   void CamTopicChanged(CamMdiSubWindow *camWindow, int index);
 
   void callbackImage(const sensor_msgs::Image::ConstPtr &msg,
                      rqt_image_view::RatioLayoutedFrame *frame);
+
+  void rosbagCallback(const std_msgs::String::ConstPtr &msg);
+  void recordRosbag(const QList<std::string> &topics,
+                    const std::string &bag_filename, double duration = 0);
 
   // data treeview
   template <typename T> QString typeToString(T type);
@@ -141,7 +130,9 @@ private:
   // ui
   QAbstractItemModel *modelRvizDisplay;
   AddDisplay *addDisplayPanel;
+  RecordROSBag *recordBagPanel;
   QList<QAction *> toolBarActions;
+  // camera
   QList<QWidget *> camWidgets;
   QMdiArea *mdiArea;
   QList<QComboBox *> camTopicComboBox;
@@ -149,6 +140,8 @@ private:
   // data
   QStandardItemModel *emptyModel;
   QStandardItemModel *pc2Model;
+
+  rosbag::Bag bag;
 };
 #endif // MAINWINDOW_H
 

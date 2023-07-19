@@ -15,6 +15,11 @@ MainWindow::MainWindow(QWidget *parent, int argc, char *argv[])
   initRViz();
   Connects();
 
+  QList<std::string> topics;
+  topics.append("/camera/image_raw");
+  //  recordRosbag(topics,
+  //               "/home/mith/catkin_qt/src/qt_rviz_demo/scripts/Bag/2.bag", 5.0);
+
   //  std::string front_lidar_topic;
 
   //  nh_.param("front_lidar_topic", front_lidar_topic,
@@ -103,6 +108,7 @@ MainWindow::~MainWindow() {
 void MainWindow::initUI() {
   initializeDockWidgets();
   addDisplayPanel = new AddDisplay();
+  recordBagPanel = new RecordROSBag();
 
   // toolbar
   toolBarActions = ui->toolBar->actions();
@@ -113,22 +119,8 @@ void MainWindow::initUI() {
   }
 
   // camera
-  //  camWidgets.append(ui->camera_1_widget);
-  //  camWidgets.append(ui->camera_2_widget);
-  //  camWidgets.append(ui->camera_3_widget);
-  //  camWidgets.append(ui->camera_4_widget);
-
-  //  camTopicComboBox.append(ui->cam1_topic_comboBox);
-  //  camTopicComboBox.append(ui->cam2_topic_comboBox);
-  //  camTopicComboBox.append(ui->cam3_topic_comboBox);
-  //  camTopicComboBox.append(ui->cam4_topic_comboBox);
 
   ui->cam_update_Btn->setIcon(QIcon("://images/refreash.png"));
-
-  //  camSubcribers.append(subscriber_cam1);
-  //  camSubcribers.append(subscriber_cam2);
-  //  camSubcribers.append(subscriber_cam3);
-  //  camSubcribers.append(subscriber_cam4);
 
   mdiArea = new QMdiArea(ui->camera_widget); // 创建中央部件 QMdiArea
   ui->camera_widget->layout()->addWidget(mdiArea);
@@ -219,22 +211,14 @@ void MainWindow::Connects() {
   // toolbar
   connect(ui->pause_action, SIGNAL(triggered(bool)), this,
           SLOT(PauseActionClickedSlot()));
+  connect(ui->record_action, SIGNAL(triggered(bool)), this,
+          SLOT(RecordActionClickedSlot()));
 
   // camera
-  connect(ui->cam_update_Btn, SIGNAL(clicked(bool)), this,
-          SLOT(updateTopicList()));
   connect(ui->cam_add_Btn, SIGNAL(clicked(bool)), this,
           SLOT(OnAddCamBtnClickedSlot()));
   connect(ui->cam_resize_Btn, SIGNAL(clicked(bool)), this,
           SLOT(OnResizeCamBtnClickedSlot()));
-  //  connect(ui->cam1_topic_comboBox, SIGNAL(currentIndexChanged(int)), this,
-  //          SLOT(Cam1TopicChangedSlot(int)));
-  //  connect(ui->cam2_topic_comboBox, SIGNAL(currentIndexChanged(int)), this,
-  //          SLOT(Cam2TopicChangedSlot(int)));
-  //  connect(ui->cam3_topic_comboBox, SIGNAL(currentIndexChanged(int)), this,
-  //          SLOT(Cam3TopicChangedSlot(int)));
-  //  connect(ui->cam4_topic_comboBox, SIGNAL(currentIndexChanged(int)), this,
-  //          SLOT(Cam4TopicChangedSlot(int)));
 
   // data treeview
   connect(ui->data_topic_comboBox, SIGNAL(currentIndexChanged(QString)), this,
@@ -280,27 +264,6 @@ void MainWindow::AddNewDisplaySlot(QTreeWidgetItem *newDisplay, QString name) {
                                Value);
 }
 
-/**
- * @brief slot 选择camera topic时调用
- * @param camera的combobox指数
- */
-void MainWindow::Cam1TopicChangedSlot(int index) {
-  // OnCamTopicChanged(ui->cam1_topic_comboBox, ui->cam1_frame, index, 1);
-}
-void MainWindow::Cam2TopicChangedSlot(int index) {
-  // OnCamTopicChanged(ui->cam2_topic_comboBox, ui->cam2_frame, index, 2);
-}
-void MainWindow::Cam3TopicChangedSlot(int index) {
-  // OnCamTopicChanged(ui->cam3_topic_comboBox, ui->cam3_frame, index, 3);
-}
-void MainWindow::Cam4TopicChangedSlot(int index) {
-  // OnCamTopicChanged(ui->cam4_topic_comboBox, ui->cam4_frame, index, 4);
-}
-
-void MainWindow::OnInfoUpdateBtnClickedSlot() {
-  system("rosrun rqt_top rqt_top");
-}
-
 //工具栏slot
 /**
  * @brief slot 暂停接受点云，画面停在当前帧
@@ -327,6 +290,20 @@ void MainWindow::PauseActionClickedSlot() {
         display->setEnabled(true);
       }
     }
+  }
+}
+
+/**
+ * @brief MainWindow::RecordActionClickedSlot
+ */
+void MainWindow::RecordActionClickedSlot() {
+  recordBagPanel->show();
+  recordBagPanel->GetTopicComboBox()->clear();
+  recordBagPanel->GetTopicComboBox()->uncheckAll();
+  recordBagPanel->GetTopicComboBox()->GetSelectModel()->clear();
+  QMap<QString, QString> alltopics = GetAllTopicsAndTypes();
+  for (auto it = alltopics.begin(); it != alltopics.end(); ++it) {
+    recordBagPanel->GetTopicComboBox()->addItem(it.key(), it.value());
   }
 }
 
@@ -583,41 +560,11 @@ void MainWindow::OnResizeCamBtnClickedSlot() {
   // mdiArea->tileSubWindows();
 }
 
-void MainWindow::OnCamComboBoxClickedSlot(CamMdiSubWindow *subwindow) {
-  QComboBox *comboBox = subwindow->topicComboBox;
-
-  comboBox->clear();
-
-  QMap<QString, QString> all_topics = GetAllTopicsAndTypes();
-
-  QMap<QString, QString>::const_iterator i = all_topics.constBegin();
-  while (i != all_topics.constEnd()) {
-    if (i.value() == "sensor_msgs/Image" ||
-        i.value() == "sensor_msgs/CompressedImage" ||
-        i.value() == "sensor_msgs/CameraInfo") {
-      comboBox->addItem(i.key());
-    }
-    ++i;
-  }
-}
-
 /**
  * @brief 更新image话题列表
  */
-void MainWindow::updateTopicList() {
-  if (!camTopicComboBox.isEmpty())
-    camTopicComboBox.clear();
-  if (!camSubWindows.isEmpty())
-    camSubWindows.clear();
 
-  foreach (QMdiSubWindow *subwindow, mdiArea->subWindowList()) {
-    camSubWindows.append(qobject_cast<CamMdiSubWindow *>(subwindow));
-  }
-
-  for (QList<CamMdiSubWindow *>::const_iterator it = camSubWindows.constBegin();
-       it != camSubWindows.constEnd(); it++) {
-    camTopicComboBox.append((*it)->topicComboBox);
-  }
+void MainWindow::OnCamComboBoxClickedSlot(CamMdiSubWindow *subwindow) {
 
   QSet<QString> message_types;
   message_types.insert("sensor_msgs/Image");
@@ -643,37 +590,26 @@ void MainWindow::updateTopicList() {
     transports.append(transport);
   }
 
-  QList<QString> selecteds;
-  for (QList<QComboBox *>::const_iterator it = camTopicComboBox.constBegin();
-       it != camTopicComboBox.constEnd(); it++) {
-    selecteds.append((*it)->currentText());
-  }
+  QString selected;
+  selected = subwindow->topicComboBox->currentText();
 
   // fill combo box
   QList<QString> topics =
-      getTopics(message_types, message_sub_types, transports).values();
+      GetTopics(message_types, message_sub_types, transports).values();
   topics.append("");
   qSort(topics);
 
-  for (QList<QComboBox *>::const_iterator it = camTopicComboBox.begin();
-       it != camTopicComboBox.end(); it++) {
-    (*it)->clear();
-  }
+  subwindow->topicComboBox->clear();
 
   for (QList<QString>::const_iterator it = topics.begin(); it != topics.end();
        it++) {
     QString label(*it);
     label.replace(" ", "/");
-    for (QList<QComboBox *>::const_iterator i = camTopicComboBox.begin();
-         i != camTopicComboBox.end(); i++) {
-      (*i)->addItem(label, QVariant(*it));
-    }
+
+    subwindow->topicComboBox->addItem(label, QVariant(*it));
   }
 
-  // restore previous selection
-  for (int i = 0; i < selecteds.size(); i++) {
-    selectTopic(camTopicComboBox.at(i), selecteds.at(i));
-  }
+  SelectTopic(subwindow->topicComboBox, selected);
 }
 
 /**
@@ -683,7 +619,7 @@ void MainWindow::updateTopicList() {
  * @param transports
  * @return 话题集合
  */
-QSet<QString> MainWindow::getTopics(const QSet<QString> &message_types,
+QSet<QString> MainWindow::GetTopics(const QSet<QString> &message_types,
                                     const QSet<QString> &message_sub_types,
                                     const QList<QString> &transports) {
   ros::master::V_TopicInfo topic_info;
@@ -736,7 +672,7 @@ QSet<QString> MainWindow::getTopics(const QSet<QString> &message_types,
  * @param comboBox camera对应的combobox组件
  * @param topic 话题字符串
  */
-void MainWindow::selectTopic(QComboBox *comboBox, const QString &topic) {
+void MainWindow::SelectTopic(QComboBox *comboBox, const QString &topic) {
   int index = comboBox->findText(topic);
   if (index == -1) {
     // add topic name to list if not yet in
@@ -749,40 +685,10 @@ void MainWindow::selectTopic(QComboBox *comboBox, const QString &topic) {
 }
 
 /**
- * @brief camera话题改变时调用
- * @param comboBox camera对应的combobox组件
- * @param frame 该camera对应的RatioLayoutedFrame组件
- * @param index 该camera对应的combobox指数
- * @param camSub 该camera的subscriber数组指数
+ * @brief MainWindow::CamTopicChanged
+ * @param camWindow 当前的相机subwindow
+ * @param index subwindow里combobox的index
  */
-void MainWindow::OnCamTopicChanged(QComboBox *comboBox,
-                                   rqt_image_view::RatioLayoutedFrame *frame,
-                                   int index, int camSub) {
-  //  conversion_mat_.release();
-
-  //  camSubcribers[camSub - 1].shutdown();
-
-  //  // reset image on topic change
-  //  frame->resize(frame->size());
-  //  frame->setImage(QImage());
-
-  //  QStringList parts = comboBox->itemData(index).toString().split(" ");
-  //  QString topic = parts.first();
-  //  QString transport = parts.length() == 2 ? parts.last() : "raw";
-
-  //  if (!topic.isEmpty()) {
-  //    image_transport::ImageTransport it(nh_);
-  //    image_transport::TransportHints hints(transport.toStdString());
-  //    try {
-  //      camSubcribers[camSub - 1] = it.subscribe(
-  //          topic.toStdString(), 1,
-  //          boost::bind(&MainWindow::callbackImage, this, _1, frame));
-  //    } catch (image_transport::TransportLoadException &e) {
-  //      ROS_ERROR("%s", (std::string("Error: ") + e.what()).c_str());
-  //    }
-  //  }
-}
-
 void MainWindow::CamTopicChanged(CamMdiSubWindow *camWindow, int index) {
   conversion_mat_.release();
   camWindow->camSubscriber.shutdown();
@@ -791,24 +697,19 @@ void MainWindow::CamTopicChanged(CamMdiSubWindow *camWindow, int index) {
   camWindow->camFrame->resize(camWindow->camFrame->size());
   camWindow->camFrame->setImage(QImage());
 
-  //  for (int i = 0; i < camWindow->topicComboBox->count(); i++) {
-  //    qDebug() << camWindow->topicComboBox->itemText(i);
-  //  }
-  std::cout << camWindow->topicComboBox->itemText(index).toStdString() << endl;
-
-  QStringList parts =
-      camWindow->topicComboBox->itemData(index).toString().split(" ");
+  QStringList parts = camWindow->topicComboBox->itemText(index).split(" ");
   QString topic = parts.first();
   QString transport = parts.length() == 2 ? parts.last() : "raw";
+  qDebug() << parts << topic;
 
   if (!topic.isEmpty()) {
     image_transport::ImageTransport it(nh_);
     image_transport::TransportHints hints(transport.toStdString());
     try {
-      camWindow->camSubscriber = it.subscribe(
-          camWindow->topicComboBox->itemText(index).toStdString(), 1,
-          boost::bind(&MainWindow::callbackImage, this, _1,
-                      camWindow->camFrame));
+      camWindow->camSubscriber =
+          it.subscribe(topic.toStdString(), 1,
+                       boost::bind(&MainWindow::callbackImage, this, _1,
+                                   camWindow->camFrame));
 
     } catch (image_transport::TransportLoadException &e) {
       ROS_ERROR("%s", (std::string("Error: ") + e.what()).c_str());
@@ -863,6 +764,57 @@ void MainWindow::callbackImage(const sensor_msgs::Image::ConstPtr &msg,
   QImage image(conversion_mat_.data, conversion_mat_.cols, conversion_mat_.rows,
                conversion_mat_.step[0], QImage::Format_RGB888);
   frame->setImage(image);
+}
+
+void MainWindow::rosbagCallback(const std_msgs::String::ConstPtr &msg) {
+  bag.write("/camera/image_raw", ros::Time::now(), *msg);
+}
+
+void MainWindow::recordRosbag(const QList<std::string> &topics,
+                              const std::string &bag_filename,
+                              double duration) {
+  // 创建ROS节点
+  ros::NodeHandle nh;
+
+  // 创建ROSbag对象
+  rosbag::Bag bag;
+  bag.open(bag_filename, rosbag::bagmode::Write);
+
+  // 创建ROS话题订阅器
+  std::vector<ros::Subscriber> subs;
+  for (const auto &topic : topics) {
+    if (topic == "/camera/image_raw") {
+      qDebug() << "write";
+      subs.push_back(nh.subscribe<sensor_msgs::Image>(
+          topic, 1, [&](const sensor_msgs::Image::ConstPtr &msg) {
+            bag.write(topic, ros::Time::now(), *msg);
+          }));
+    } else {
+      ROS_WARN_STREAM("Unknown topic: " << topic);
+    }
+  }
+
+  // 持续录制数据
+  if (duration <= 0) {
+    ROS_INFO_STREAM("Start recording indefinitely...");
+    ros::spin();
+  }
+  // 持续录制一段时间后停止
+  else {
+    ROS_INFO_STREAM("Start recording for " << duration << " seconds...");
+    ros::Time start_time = ros::Time::now();
+    while ((ros::Time::now() - start_time).toSec() < duration) {
+      ros::spinOnce();
+    }
+  }
+
+  // 停止订阅器并关闭ROSbag文件
+  for (auto &sub : subs) {
+    sub.shutdown();
+  }
+  bag.close();
+
+  ROS_INFO_STREAM("Recording finished!");
 }
 
 } // namespace qt_rviz_demo
