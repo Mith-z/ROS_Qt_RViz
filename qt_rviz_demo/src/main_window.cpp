@@ -69,6 +69,11 @@ void MainWindow::initUI() {
   ui->pause_action->setIcon(QIcon("://images/pause.png"));
   ui->record_action->setIcon(QIcon("://images/record.png"));
 
+  ui->select_action->setIcon(QIcon("://images/classes/Select.png"));
+  ui->interact_action->setIcon(QIcon("://images/classes/Interact.png"));
+  ui->camera_move_action->setIcon(QIcon("://images/classes/MoveCamera.png"));
+  ui->camera_focus_action->setIcon(QIcon("://images/classes/FocusCamera.svg"));
+
   // camera
   mdiArea = new QMdiArea(ui->camera_widget); // 创建中央部件 QMdiArea
   ui->camera_widget->layout()->addWidget(mdiArea);
