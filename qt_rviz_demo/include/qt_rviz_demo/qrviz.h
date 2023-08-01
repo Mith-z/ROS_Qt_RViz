@@ -45,6 +45,7 @@ public:
   rviz::VisualizationManager *getVisualizationManager() {
     return visualManager;
   }
+  rviz::ToolManager *getToolManager() { return toolManager; }
 signals:
   void DisplayTreeModelSignal(QAbstractItemModel *model);
   void AddNewDisplaySignal(QString name);

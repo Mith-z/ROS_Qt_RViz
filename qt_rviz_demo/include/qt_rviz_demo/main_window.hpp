@@ -1,13 +1,12 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "PointcloudPublish/pointcloud_pub.h"
 #include "UIPromoteClass/cam_mdisubwindow.h"
 #include "UIPromoteClass/ratio_layouted_frame.h"
 #include "adddisplay.h"
 #include "nodeinfo.h"
 #include "qrviz.h"
-#include "record_rosbag.h"
+#include "record_panel.h"
 
 #include <QtWidgets>
 
@@ -49,9 +48,6 @@ public:
   void initRViz();
   void Connects();
 
-  //  static void
-  //  FrontPoint_callback(const sensor_msgs::PointCloud2::ConstPtr &cloud_msg);
-
 public slots:
   void GetRVizTreeModelSlot(QAbstractItemModel *model);
   void OnAddDisplayBtnClickedSlot();
@@ -72,10 +68,6 @@ public slots:
   void PauseActionClickedSlot();
   void RecordActionClickedSlot();
 
-  //模型
-  void DeteceBtnSlot();
-  void PublishBtnSlot();
-
   bool eventFilter(QObject *watched, QEvent *event);
 
 protected:
@@ -89,10 +81,6 @@ protected:
   void callbackImage(const sensor_msgs::Image::ConstPtr &msg,
                      rqt_image_view::RatioLayoutedFrame *frame);
 
-  void rosbagCallback(const std_msgs::String::ConstPtr &msg);
-  void recordRosbag(const QList<std::string> &topics,
-                    const std::string &bag_filename, double duration = 0);
-
   // data treeview
   template <typename T> QString typeToString(T type);
   void InitPC2Model();
@@ -102,9 +90,6 @@ protected:
                       QString data, QList<QStandardItem *> items);
   QMap<QString, QString> GetAllTopicsAndTypes();
   void OnDataTopicChanged(QString topicName);
-
-  void pythonTest();
-  void static run_python_code(PyObject *callback);
 
   cv::Mat conversion_mat_;
   int num_gridlines_;
@@ -120,9 +105,8 @@ protected:
 
 private:
   ros::NodeHandle nh_;
-  ros::NodeHandle *nh;
+  // ros::NodeHandle *nh;
   nodeinfo *node_;
-  Pointcloud_Pub *pub;
   qrviz *_qrviz;
 
   QTimer *dataTimer;
@@ -130,7 +114,7 @@ private:
   // ui
   QAbstractItemModel *modelRvizDisplay;
   AddDisplay *addDisplayPanel;
-  RecordROSBag *recordBagPanel;
+  RecordPanel *recordBagPanel;
   QList<QAction *> toolBarActions;
   // camera
   QList<QWidget *> camWidgets;

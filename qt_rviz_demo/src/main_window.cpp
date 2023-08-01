@@ -2,8 +2,6 @@
 #include "../include/qt_rviz_demo/qrviz.h"
 #include "ui_main_window.h"
 
-// std::string FrontPcd_path;
-
 namespace qt_rviz_demo {
 
 MainWindow::MainWindow(QWidget *parent, int argc, char *argv[])
@@ -15,77 +13,25 @@ MainWindow::MainWindow(QWidget *parent, int argc, char *argv[])
   initRViz();
   Connects();
 
-  QList<std::string> topics;
-  topics.append("/camera/image_raw");
-  //  recordRosbag(topics,
-  //               "/home/mith/catkin_qt/src/qt_rviz_demo/scripts/Bag/2.bag", 5.0);
+  //  ros::Publisher pub = nh_.advertise<qt_rviz_demo::Person>(
+  //      "person_topic", 10);
+  //  ros::Rate rate(1);       // 设定发布频率
 
-  //  std::string front_lidar_topic;
+  //  while (ros::ok()) {
+  //    qt_rviz_demo::Person person_msg; // 创建一个 Person 类型的消息
 
-  //  nh_.param("front_lidar_topic", front_lidar_topic,
-  //            std::string("/rslidar_points"));
-  //  nh_.param(
-  //      "FrontPcd_path", FrontPcd_path,
-  //      std::string("/home/mith/catkin_qt/src/qt_rviz_demo/scripts/Lidar/"));
-  //  ros::Subscriber sub_cloud1 =
-  //      nh_.subscribe(front_lidar_topic, 100, FrontPoint_callback);
-  //  ros::MultiThreadedSpinner spinner(1);
-  //  spinner.spin();
-}
+  //    // 设置消息中的字段值
+  //    person_msg.name = "John";
+  //    person_msg.age = 25;
+  //    person_msg.gender = "Male";
+  //    person_msg.height = 180.0;
+  //    person_msg.weight = 75.0;
 
-// void MainWindow::FrontPoint_callback(
-//    const sensor_msgs::PointCloud2::ConstPtr &cloud_msg) {
-//  ros::Time time = cloud_msg->header.stamp;
-//  pcl::PointCloud<pcl::PointXYZI> tmp;
-//  pcl::fromROSMsg(*cloud_msg, tmp);
-//  double tt = time.toSec();
+  //    pub.publish(person_msg); // 发布消息到话题
 
-//  // save to pcd file
-//  pcl::io::savePCDFileBinary(FrontPcd_path + std::to_string(tt) + ".pcd",
-//  tmp); pcl::io::savePCDFileASCII(FrontPcd_path + std::to_string(tt) + ".pcd",
-//  tmp); pcl::io::savePLYFile(FrontPcd_path + std::to_string(tt) + ".ply",
-//  tmp);
-//  // save to bin file
-//  std::ofstream out;
-//  std::string save_filename = FrontPcd_path + std::to_string(tt) + ".bin";
-//  out.open(save_filename, std::ios::out | std::ios::binary);
-//  std::cout << save_filename << " saved" << std::endl;
-//  int cloudSize = tmp.points.size();
-//  for (int i = 0; i < cloudSize; ++i) {
-//    float point_x = tmp.points[i].x;
-//    float point_y = tmp.points[i].y;
-//    float point_z = tmp.points[i].z;
-//    out.write(reinterpret_cast<const char *>(&point_x), sizeof(float));
-//    out.write(reinterpret_cast<const char *>(&point_y), sizeof(float));
-//    out.write(reinterpret_cast<const char *>(&point_z), sizeof(float));
-//  }
-//  out.close();
-//}
-
-void MainWindow::pythonTest() {
-  Py_Initialize();
-  PyRun_SimpleString("import sys");
-  PyRun_SimpleString(
-      "sys.path.append('/home/mith/catkin_qt/src/qt_rviz_demo/scripts')");
-
-  PyObject *pModule = PyImport_ImportModule("pcl_publish");
-  if (pModule == NULL) {
-    PyErr_Print();
-    qDebug("cannot find module");
-  }
-
-  PyObject *pFunc = PyObject_GetAttrString(pModule, "func");
-  if (pFunc == NULL) {
-    PyErr_Print();
-    qDebug("cannot find function");
-  }
-
-  PyObject *pRet = PyObject_CallObject(pFunc, NULL);
-
-  //  char *result;
-  //  PyArg_Parse(pRet, "s", &result);
-  //  qDebug() << QString(QLatin1String(result));
-  Py_Finalize();
+  //    ros::spinOnce();
+  //    rate.sleep();
+  //  }
 }
 
 MainWindow::~MainWindow() {
@@ -108,7 +54,9 @@ MainWindow::~MainWindow() {
 void MainWindow::initUI() {
   initializeDockWidgets();
   addDisplayPanel = new AddDisplay();
-  recordBagPanel = new RecordROSBag();
+  recordBagPanel = new RecordPanel();
+  recordBagPanel->setMainWindowWidget(this);
+  // menubar
 
   // toolbar
   toolBarActions = ui->toolBar->actions();
@@ -118,14 +66,19 @@ void MainWindow::initUI() {
     group->addAction(toolBarActions.at(i));
   }
 
+  ui->pause_action->setIcon(QIcon("://images/pause.png"));
+  ui->record_action->setIcon(QIcon("://images/record.png"));
+
   // camera
-
-  ui->cam_update_Btn->setIcon(QIcon("://images/refreash.png"));
-
   mdiArea = new QMdiArea(ui->camera_widget); // 创建中央部件 QMdiArea
   ui->camera_widget->layout()->addWidget(mdiArea);
   mdiArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
   mdiArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+
+  for (int i = 0; i < 4; i++) {
+    OnAddCamBtnClickedSlot();
+  }
+
   // data
   emptyModel = new QStandardItemModel();
   dataTimer = new QTimer();
@@ -151,9 +104,22 @@ void MainWindow::initRViz() {
   value.insert("Plane Cell Count", 10);
   _qrviz->InitDisplayTreeModel("rviz/Grid", "Grid", true, value);
 
-  QMap<QString, QVariant> value1;
-  value1.insert("Topic", "/kitti_point_cloud_origin");
-  _qrviz->InitDisplayTreeModel("rviz/PointCloud2", "pc2", true, value1);
+  //工具栏tool
+  rviz::Tool *toolMoveCamera =
+      _qrviz->getToolManager()->addTool("rviz/MoveCamera");
+  rviz::Tool *toolSelect = _qrviz->getToolManager()->addTool("rviz/Select");
+  rviz::Tool *toolInteract = _qrviz->getToolManager()->addTool("rviz/Interact");
+  rviz::Tool *toolCameraFocus =
+      _qrviz->getToolManager()->addTool("rviz/FocusCamera");
+
+  connect(ui->interact_action, &QAction::triggered,
+          [=]() { _qrviz->getToolManager()->setCurrentTool(toolInteract); });
+  connect(ui->camera_move_action, &QAction::triggered,
+          [=]() { _qrviz->getToolManager()->setCurrentTool(toolMoveCamera); });
+  connect(ui->camera_focus_action, &QAction::triggered,
+          [=]() { _qrviz->getToolManager()->setCurrentTool(toolCameraFocus); });
+  connect(ui->select_action, &QAction::triggered,
+          [=]() { _qrviz->getToolManager()->setCurrentTool(toolSelect); });
 }
 
 /**
@@ -190,6 +156,33 @@ void MainWindow::initializeDockWidgets() {
   //合并
   this->tabifyDockWidget(typeDock, infoDock);
   typeDock->raise();
+
+  //面板显示控制
+  connect(ui->tools_action, &QAction::toggled,
+          [=](bool isChecked) { ui->toolBar->setHidden(!isChecked); });
+  connect(ui->toolBar, &QToolBar::visibilityChanged, [=]() {
+    ui->tools_action->setChecked(!(ui->toolBar->isHidden()));
+  }); //工具栏
+  connect(ui->type_action, &QAction::toggled,
+          [=](bool isChecked) { ui->typeDock->setHidden(!isChecked); });
+  connect(ui->typeDock, &QDockWidget::visibilityChanged, [=]() {
+    ui->type_action->setChecked(!(ui->typeDock->isHidden()));
+  }); //显示
+  connect(ui->info_action, &QAction::toggled,
+          [=](bool isChecked) { ui->infoDock->setHidden(!isChecked); });
+  connect(ui->infoDock, &QDockWidget::visibilityChanged, [=]() {
+    ui->info_action->setChecked(!(ui->infoDock->isHidden()));
+  }); //信息
+  connect(ui->data_action, &QAction::toggled,
+          [=](bool isChecked) { ui->dataDock->setHidden(!isChecked); });
+  connect(ui->dataDock, &QDockWidget::visibilityChanged, [=]() {
+    ui->data_action->setChecked(!(ui->dataDock->isHidden()));
+  }); //数据
+  connect(ui->camera_action, &QAction::toggled,
+          [=](bool isChecked) { ui->cameraDock->setHidden(!isChecked); });
+  connect(ui->cameraDock, &QDockWidget::visibilityChanged, [=]() {
+    ui->camera_action->setChecked(!(ui->cameraDock->isHidden())); //相机
+  });
 }
 
 /**
@@ -223,10 +216,6 @@ void MainWindow::Connects() {
   // data treeview
   connect(ui->data_topic_comboBox, SIGNAL(currentIndexChanged(QString)), this,
           SLOT(DataTopicChangedSlot(QString)));
-
-  //模型
-  connect(ui->detect_Btn, SIGNAL(clicked(bool)), this, SLOT(DeteceBtnSlot()));
-  connect(ui->publish_Btn, SIGNAL(clicked(bool)), this, SLOT(PublishBtnSlot()));
 }
 
 /**
@@ -272,12 +261,12 @@ void MainWindow::PauseActionClickedSlot() {
   QString fixedFrame = _qrviz->getVisualizationManager()->getFixedFrame();
   if (ui->pause_action->text() == "暂停") {
     ui->pause_action->setText("播放");
-
+    ui->pause_action->setIcon(QIcon("://images/play.png"));
     _qrviz->getVisualizationManager()->getFrameManager()->setFixedFrame("");
 
   } else {
     ui->pause_action->setText("暂停");
-
+    ui->pause_action->setIcon(QIcon("://images/pause.png"));
     _qrviz->getVisualizationManager()->getFrameManager()->setFixedFrame(
         fixedFrame.toStdString());
 
@@ -298,68 +287,12 @@ void MainWindow::PauseActionClickedSlot() {
  */
 void MainWindow::RecordActionClickedSlot() {
   recordBagPanel->show();
-  recordBagPanel->GetTopicComboBox()->clear();
-  recordBagPanel->GetTopicComboBox()->uncheckAll();
-  recordBagPanel->GetTopicComboBox()->GetSelectModel()->clear();
+  this->setEnabled(false);
+
   QMap<QString, QString> alltopics = GetAllTopicsAndTypes();
   for (auto it = alltopics.begin(); it != alltopics.end(); ++it) {
     recordBagPanel->GetTopicComboBox()->addItem(it.key(), it.value());
   }
-}
-
-void MainWindow::DeteceBtnSlot() {
-  //  Py_Initialize();
-  //  PyRun_SimpleString("import sys");
-  //  PyRun_SimpleString(
-  //      "sys.path.append('/home/mith/catkin_qt/src/qt_rviz_demo/scripts')");
-
-  //  PyObject *pModule = PyImport_ImportModule("mmdet3d_client");
-  //  if (pModule == NULL) {
-  //    PyErr_Print();
-  //    qDebug("cannot find module");
-  //  }
-
-  //  PyObject *pFunc = PyObject_GetAttrString(pModule, "func");
-  //  if (pFunc == NULL) {
-  //    PyErr_Print();
-  //    qDebug("cannot find function");
-  //  }
-
-  //  PyObject *pRet = PyObject_CallObject(pFunc, NULL);
-
-  //  Py_Finalize();
-}
-
-void MainWindow::PublishBtnSlot() {
-  //  Py_Initialize();
-  //  PyRun_SimpleString("import sys");
-  //  PyRun_SimpleString(
-  //      "sys.path.append('/home/mith/catkin_qt/src/qt_rviz_demo/scripts')");
-
-  //  PyObject *pModule = PyImport_ImportModule("AllNodesInfo");
-  //  if (pModule == NULL) {
-  //    PyErr_Print();
-  //    qDebug("cannot find module");
-  //  }
-
-  //  PyObject *pFunc = PyObject_GetAttrString(pModule, "pcl_publish");
-  //  if (pFunc == NULL) {
-  //    PyErr_Print();
-  //    qDebug("cannot find function");
-  //  }
-
-  //  PyObject *pRet = PyObject_CallObject(pFunc, NULL);
-
-  //  Py_Finalize();
-}
-
-void MainWindow::run_python_code(PyObject *callback) {
-  Py_Initialize();
-
-  // call the Python function
-  PyObject_CallObject(callback, NULL);
-
-  Py_Finalize();
 }
 
 void MainWindow::DataTopicChangedSlot(QString topicName) {
@@ -510,10 +443,14 @@ void MainWindow::UpdatePC2Data() {
 /**
  * @brief MainWindow::OnAddCamBtnClickedSlot
  */
+int cameraIndex = 0; //相机标题index
 void MainWindow::OnAddCamBtnClickedSlot() {
   CamMdiSubWindow *newSubWindow = new CamMdiSubWindow;
   mdiArea->addSubWindow(newSubWindow);
   newSubWindow->show();
+  //设置标题
+  cameraIndex++;
+  newSubWindow->setWindowTitle("相机" + QString("%1").arg(cameraIndex));
 
   connect(newSubWindow->topicComboBox,
           QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -556,7 +493,11 @@ void MainWindow::OnResizeCamBtnClickedSlot() {
     mdiArea->subWindowList()[i]->setGeometry(i % 4 * subwindowWidth,
                                              i / 4 * subwindowHeight,
                                              subwindowWidth, subwindowHeight);
+
+    mdiArea->subWindowList()[i]->setWindowTitle("相机" +
+                                                QString("%1").arg(i + 1));
   }
+  cameraIndex = mdiArea->subWindowList().size();
   // mdiArea->tileSubWindows();
 }
 
@@ -764,57 +705,6 @@ void MainWindow::callbackImage(const sensor_msgs::Image::ConstPtr &msg,
   QImage image(conversion_mat_.data, conversion_mat_.cols, conversion_mat_.rows,
                conversion_mat_.step[0], QImage::Format_RGB888);
   frame->setImage(image);
-}
-
-void MainWindow::rosbagCallback(const std_msgs::String::ConstPtr &msg) {
-  bag.write("/camera/image_raw", ros::Time::now(), *msg);
-}
-
-void MainWindow::recordRosbag(const QList<std::string> &topics,
-                              const std::string &bag_filename,
-                              double duration) {
-  // 创建ROS节点
-  ros::NodeHandle nh;
-
-  // 创建ROSbag对象
-  rosbag::Bag bag;
-  bag.open(bag_filename, rosbag::bagmode::Write);
-
-  // 创建ROS话题订阅器
-  std::vector<ros::Subscriber> subs;
-  for (const auto &topic : topics) {
-    if (topic == "/camera/image_raw") {
-      qDebug() << "write";
-      subs.push_back(nh.subscribe<sensor_msgs::Image>(
-          topic, 1, [&](const sensor_msgs::Image::ConstPtr &msg) {
-            bag.write(topic, ros::Time::now(), *msg);
-          }));
-    } else {
-      ROS_WARN_STREAM("Unknown topic: " << topic);
-    }
-  }
-
-  // 持续录制数据
-  if (duration <= 0) {
-    ROS_INFO_STREAM("Start recording indefinitely...");
-    ros::spin();
-  }
-  // 持续录制一段时间后停止
-  else {
-    ROS_INFO_STREAM("Start recording for " << duration << " seconds...");
-    ros::Time start_time = ros::Time::now();
-    while ((ros::Time::now() - start_time).toSec() < duration) {
-      ros::spinOnce();
-    }
-  }
-
-  // 停止订阅器并关闭ROSbag文件
-  for (auto &sub : subs) {
-    sub.shutdown();
-  }
-  bag.close();
-
-  ROS_INFO_STREAM("Recording finished!");
 }
 
 } // namespace qt_rviz_demo

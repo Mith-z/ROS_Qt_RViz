@@ -51,37 +51,6 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_2">
-       <attribute name="title">
-        <string>Tab 2</string>
-       </attribute>
-       <widget class="QPushButton" name="detect_Btn">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>80</width>
-          <height>26</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>检测</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="publish_Btn">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>50</y>
-          <width>80</width>
-          <height>26</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>发布</string>
-        </property>
-       </widget>
-      </widget>
      </widget>
     </item>
    </layout>
@@ -135,6 +104,9 @@
    <property name="windowTitle">
     <string>toolBar</string>
    </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextBesideIcon</enum>
+   </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
    </attribute>
@@ -142,7 +114,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="interact_action"/>
-   <addaction name="choose_action"/>
+   <addaction name="select_action"/>
    <addaction name="camera_move_action"/>
    <addaction name="camera_focus_action"/>
    <addaction name="separator"/>
@@ -284,13 +256,6 @@
            <enum>Qt::LeftToRight</enum>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_2">
-           <item>
-            <widget class="QPushButton" name="cam_update_Btn">
-             <property name="text">
-              <string/>
-             </property>
-            </widget>
-           </item>
            <item>
             <widget class="QPushButton" name="cam_resize_Btn">
              <property name="text">
@@ -536,7 +501,7 @@
     <string>打开文件</string>
    </property>
   </action>
-  <action name="choose_action">
+  <action name="select_action">
    <property name="checkable">
     <bool>true</bool>
    </property>

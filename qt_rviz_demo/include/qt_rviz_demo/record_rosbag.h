@@ -1,6 +1,7 @@
 #ifndef RECORD_ROSBAG_H
 #define RECORD_ROSBAG_H
 
+#include <QObject>
 #include <QtWidgets>
 
 #include <image_transport/image_transport.h>
@@ -15,32 +16,16 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
 
-#include "./UIPromoteClass/multiselect_combobox.h"
-
-namespace Ui {
-class RecordROSBag;
-}
-
-class RecordROSBag : public QWidget {
+class RecordRosBag : public QObject {
   Q_OBJECT
-
 public:
-  explicit RecordROSBag(QWidget *parent = nullptr);
-  ~RecordROSBag();
+  explicit RecordRosBag();
 
-  MultiSelectComboBox *GetTopicComboBox() { return topicMultiComboBox; }
-
-  void recordRosbag(QList<std::string> &topics,
-                    QMap<QString, QVariant> topicTypeMap,
-                    const std::string &bag_filename, double duration = 0);
+signals:
 
 public slots:
-  void OnRecordBtnClickedSlot();
-
-private:
-  Ui::RecordROSBag *ui;
-  MultiSelectComboBox *topicMultiComboBox;
-  QMap<QString, QVariant> topicsAndTypes;
+  void Record(QMap<QString, QVariant> topicTypeMap,
+              const std::string &bag_filename, double duration);
 };
 
 #endif // RECORD_ROSBAG_H

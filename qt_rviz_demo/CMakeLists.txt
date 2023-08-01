@@ -61,6 +61,17 @@ include_directories(
 link_directories(/home/mith/software/qt/5.14.2/gcc_64/lib)
 #link_directories(/opt/ros/melodic/lib/python2.7/dist-packages lib)
 
+#ros message
+add_message_files(
+  FILES
+  Person.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
+
 # Use this to define what the package will export (e.g. libs, headers).
 # Since the default here is to produce only a binary, we don't worry about
 # exporting anything. 
