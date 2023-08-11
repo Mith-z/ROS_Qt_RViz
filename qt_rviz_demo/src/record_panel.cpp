@@ -30,6 +30,9 @@ RecordPanel::RecordPanel(QWidget *parent)
   //录制按钮
   connect(ui->record_Btn, SIGNAL(clicked(bool)), this,
           SLOT(OnRecordBtnClickedSlot()));
+  //取消按钮
+  connect(ui->cancel_Btn, SIGNAL(clicked(bool)), this,
+          SLOT(OnCancelBtnClickedSlot()));
 }
 
 RecordPanel::~RecordPanel() {
@@ -98,39 +101,30 @@ void RecordPanel::OnRecordBtnClickedSlot() {
   newRecord->moveToThread(recordThread); //录制移到新线程，防止阻塞
 
   connect(recordThread, &QThread::started, newRecord, [=]() {
-    newRecord->Record(topicsAndTypes, bag_dir, record_duration);
+    // newRecord->Record(topicsAndTypes, bag_dir, record_duration);
+    this->stopRecord = false;
+    newRecord->Record(topicsAndTypes, bag_dir, this);
   });
   recordThread->start();
 
-  ui->record_progressBar->setValue(0);
-  QTimer *timer = new QTimer(); //进度条计时器
-  connect(timer, &QTimer::timeout, this, [=]() {
-    progressValue += static_cast<int>(100 / record_duration);
-    ui->record_progressBar->setValue(progressValue);
-    if (progressValue >= 100) {
-      ui->record_progressBar->setValue(100);
-      timer->stop();
-      recordThread->terminate();
-
-      if (!this->isHidden()) {
-        QMessageBox msgBox(QMessageBox::Warning, "提示", "录制完成！",
-                           QMessageBox::Ok, this);
-        int ret = msgBox.exec();
-        if (ret == QMessageBox::Ok || ret == QMessageBox::Close) {
-          this->close();
-        }
-      } else {
-        QMessageBox::warning(this->mainwindow, "提示", "录制完成！");
-      }
-    }
+  recordTimer = new QTimer(); //进度条计时器
+  progressValue = 0;
+  connect(recordTimer, &QTimer::timeout, this, [=]() {
+    progressValue += 1;
+    qDebug() << progressValue;
   });
-  timer->start(1000); // 每秒触发一次定时器
+  recordTimer->start(1000); // 每秒触发一次定时器
 }
 
 /**
  * @brief RecordPanel::Slot,点击取消按钮
  */
-void RecordPanel::OnCancelBtnClickedSlot() { close(); }
+void RecordPanel::OnCancelBtnClickedSlot() {
+  // close();
+  recordThread->terminate();
+  recordTimer->stop();
+  this->stopRecord = true;
+}
 
 void RecordPanel::showEvent(QShowEvent *event) {
   this->topicMultiComboBox->clear();

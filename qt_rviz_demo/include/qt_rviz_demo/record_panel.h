@@ -34,6 +34,7 @@ public:
   MultiSelectComboBox *GetTopicComboBox() { return topicMultiComboBox; }
 
   void setMainWindowWidget(QWidget *window) { mainwindow = window; }
+  bool GetStopRecord() { return this->stopRecord; }
 
 public slots:
   void OnRecordBtnClickedSlot();
@@ -43,14 +44,16 @@ private:
   Ui::RecordPanel *ui;
   MultiSelectComboBox *topicMultiComboBox;
   QMap<QString, QVariant> topicsAndTypes;
+
   int progressValue;
+  bool stopRecord = false;
 
   QWidget *mainwindow;
   QThread *recordThread;
+  QTimer *recordTimer;
 
 protected:
   void showEvent(QShowEvent *event) override;
   void closeEvent(QCloseEvent *event) override;
 };
-
 #endif // RECORD_PANEL_H
