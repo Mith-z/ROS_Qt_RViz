@@ -61,7 +61,7 @@ public slots:
   void OnCamComboBoxClickedSlot(CamMdiSubWindow *subwindow);
 
   void DataTopicChangedSlot(QString topicName);
-  void UpdatePC2Data();
+  void UpdateData(QString topicName);
   void UpdateDataTreeView();
 
   //工具栏

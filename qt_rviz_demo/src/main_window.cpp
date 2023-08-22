@@ -331,7 +331,9 @@ template <typename T> QString MainWindow::typeToString(T type) {
   std::string result = hexNumber.str();
   return QString::fromStdString(result);
 }
-
+/**
+ * @brief MainWindow::InitPC2Model
+ */
 void MainWindow::InitPC2Model() {
   pc2Model = new QStandardItemModel();
   pc2Model->setHorizontalHeaderLabels(QStringList() << u8"名称" << u8"数值");
@@ -394,54 +396,61 @@ void MainWindow::OnDataTopicChanged(QString topicName) {
   if (dataTimer != NULL && dataTimer->isActive()) {
     // dataTimer->stop();
     dataTimerThread->terminate();
-    qDebug("yes");
+    //清除timer和thread的链接
+    disconnect(dataTimer, nullptr, nullptr, nullptr);
+    disconnect(dataTimerThread, nullptr, nullptr, nullptr);
   }
 
   if (all_topics[topicName] == "sensor_msgs/PointCloud2") {
     ui->dataTreeView->setModel(pc2Model);
-    //设置水平表头列平均分
-    ui->dataTreeView->header()->setSectionResizeMode(QHeaderView::Stretch);
-    ui->dataTreeView->expandAll();
-
-    UpdatePC2Data();
-    dataTimer->setInterval(200);
-    dataTimer->moveToThread(dataTimerThread);
-    connect(dataTimer, SIGNAL(timeout()), this, SLOT(UpdatePC2Data()),
-            Qt::DirectConnection);
-    try {
-      connect(dataTimerThread, SIGNAL(started()), dataTimer, SLOT(start()));
-      connect(dataTimerThread, SIGNAL(finished()), dataTimer, SLOT(stop()));
-    } catch (std::exception e) {
-    }
-
-    dataTimerThread->start();
-
-  } else {
+  }
+  //在此处添加else if语句，添加自定义数据消息
+  else {
     ui->dataTreeView->setModel(emptyModel);
   }
+  //设置水平表头列平均分
+  ui->dataTreeView->header()->setSectionResizeMode(QHeaderView::Stretch);
+  ui->dataTreeView->expandAll();
+
+  UpdateData(topicName);
+  dataTimer->setInterval(200);
+  dataTimer->moveToThread(dataTimerThread);
+  connect(dataTimer, &QTimer::timeout, [=]() { UpdateData(topicName); });
+
+  try {
+    connect(dataTimerThread, SIGNAL(started()), dataTimer, SLOT(start()));
+    connect(dataTimerThread, SIGNAL(finished()), dataTimer, SLOT(stop()));
+  } catch (std::exception e) {
+  }
+
+  dataTimerThread->start();
 }
 
-void MainWindow::UpdatePC2Data() {
+void MainWindow::UpdateData(QString topicName) {
+  QMap<QString, QString> all_topics = GetAllTopicsAndTypes();
 
-  boost::shared_ptr<sensor_msgs::PointCloud2 const> pc2;
-  std::string topic = ui->data_topic_comboBox->currentText().toStdString();
-  pc2 = ros::topic::waitForMessage<sensor_msgs::PointCloud2>(topic, nh_);
+  if (all_topics[topicName] == "sensor_msgs/PointCloud2") {
+    boost::shared_ptr<sensor_msgs::PointCloud2 const> pc2;
+    std::string topic = ui->data_topic_comboBox->currentText().toStdString();
+    pc2 = ros::topic::waitForMessage<sensor_msgs::PointCloud2>(topic, nh_);
 
-  pc2Model->item(0, 0)->child(0, 1)->setText(
-      QString("%1").arg(pc2->header.seq));
-  pc2Model->item(0, 0)->child(1, 0)->child(0, 1)->setText(
-      QString("%1").arg(pc2->header.stamp.sec));
-  pc2Model->item(0, 0)->child(1, 0)->child(1, 1)->setText(
-      QString("%1").arg(pc2->header.stamp.nsec));
+    pc2Model->item(0, 0)->child(0, 1)->setText(
+        QString("%1").arg(pc2->header.seq));
+    pc2Model->item(0, 0)->child(1, 0)->child(0, 1)->setText(
+        QString("%1").arg(pc2->header.stamp.sec));
+    pc2Model->item(0, 0)->child(1, 0)->child(1, 1)->setText(
+        QString("%1").arg(pc2->header.stamp.nsec));
 
-  pc2Model->item(0, 0)->child(2, 1)->setText(
-      typeToString(pc2->header.frame_id));
-  pc2Model->item(1, 1)->setText(QString("%1").arg(pc2->height));
-  pc2Model->item(2, 1)->setText(QString("%1").arg(pc2->width));
-  pc2Model->item(4, 1)->setText(QString("%1").arg(pc2->is_bigendian));
-  pc2Model->item(5, 1)->setText(QString("%1").arg(pc2->point_step));
-  pc2Model->item(6, 1)->setText(QString("%1").arg(pc2->row_step));
-  pc2Model->item(7, 1)->setText(QString("%1").arg(pc2->is_dense));
+    pc2Model->item(0, 0)->child(2, 1)->setText(
+        typeToString(pc2->header.frame_id));
+    pc2Model->item(1, 1)->setText(QString("%1").arg(pc2->height));
+    pc2Model->item(2, 1)->setText(QString("%1").arg(pc2->width));
+    pc2Model->item(4, 1)->setText(QString("%1").arg(pc2->is_bigendian));
+    pc2Model->item(5, 1)->setText(QString("%1").arg(pc2->point_step));
+    pc2Model->item(6, 1)->setText(QString("%1").arg(pc2->row_step));
+    pc2Model->item(7, 1)->setText(QString("%1").arg(pc2->is_dense));
+  }
+  //在此处添加else if语句，更新自定义消息数据内容
 }
 
 // camera

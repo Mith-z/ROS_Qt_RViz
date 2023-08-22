@@ -38,14 +38,14 @@ public:
 
 public slots:
   void OnRecordBtnClickedSlot();
-  void OnCancelBtnClickedSlot();
+  void OnStopRecordBtnClickedSlot();
 
 private:
   Ui::RecordPanel *ui;
   MultiSelectComboBox *topicMultiComboBox;
   QMap<QString, QVariant> topicsAndTypes;
 
-  int progressValue;
+  double recordTime = 0.0;
   bool stopRecord = false;
 
   QWidget *mainwindow;
