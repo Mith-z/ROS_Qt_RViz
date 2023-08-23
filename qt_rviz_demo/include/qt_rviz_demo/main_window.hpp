@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "UIPromoteClass/cam_mdisubwindow.h"
+#include "UIPromoteClass/combobox_delegate.h"
 #include "UIPromoteClass/ratio_layouted_frame.h"
 #include "adddisplay.h"
 #include "nodeinfo.h"
@@ -62,7 +63,8 @@ public slots:
 
   void DataTopicChangedSlot(QString topicName);
   void UpdateData(QString topicName);
-  void UpdateDataTreeView();
+
+  void UpdateDisplayTreeView(QString displayName);
 
   //工具栏
   void PauseActionClickedSlot();
@@ -89,6 +91,7 @@ protected:
   void AddTreeViewRow(QStandardItemModel *parentModel, QString name,
                       QString data, QList<QStandardItem *> items);
   QMap<QString, QString> GetAllTopicsAndTypes();
+  QStringList GetAllTopics();
   void OnDataTopicChanged(QString topicName);
 
   cv::Mat conversion_mat_;

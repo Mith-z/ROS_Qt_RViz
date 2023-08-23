@@ -29,6 +29,9 @@ RecordPanel::RecordPanel(QWidget *parent)
   //停止录制按钮
   connect(ui->stop_record_Btn, SIGNAL(clicked(bool)), this,
           SLOT(OnStopRecordBtnClickedSlot()));
+
+  recordThread = new QThread();
+  recordTimer = new QTimer();
 }
 
 RecordPanel::~RecordPanel() {
@@ -92,9 +95,7 @@ void RecordPanel::OnRecordBtnClickedSlot() {
   //开始录制
 
   ui->record_Btn->setEnabled(false);
-
   RecordRosBag *newRecord = new RecordRosBag(); //创建录制对象
-  recordThread = new QThread();
   newRecord->moveToThread(recordThread); //录制移到新线程，防止阻塞
 
   connect(recordThread, &QThread::started, newRecord, [=]() {
@@ -103,9 +104,8 @@ void RecordPanel::OnRecordBtnClickedSlot() {
     newRecord->Record(topicsAndTypes, bag_dir, this);
   });
   recordThread->start();
-
+  qDebug() << "start record";
   //录制时长计时器
-  recordTimer = new QTimer();
   recordTime = 0.0;
   connect(recordTimer, &QTimer::timeout, this, [=]() {
     recordTime += 0.1;
@@ -122,7 +122,7 @@ void RecordPanel::OnStopRecordBtnClickedSlot() {
     return;
 
   ui->record_Btn->setEnabled(true);
-  qDebug() << "stop";
+  qDebug() << "stop record";
   recordThread->terminate();
   if (recordTimer->isActive())
     recordTimer->stop();
@@ -142,6 +142,8 @@ void RecordPanel::showEvent(QShowEvent *event) {
 
 void RecordPanel::closeEvent(QCloseEvent *event) {
   this->mainwindow->setEnabled(true);
+
+  qDebug() << this->recordThread->isRunning();
   OnStopRecordBtnClickedSlot();
   QWidget::closeEvent(event);
 }

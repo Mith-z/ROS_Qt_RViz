@@ -256,6 +256,64 @@ void MainWindow::AddNewDisplaySlot(QTreeWidgetItem *newDisplay, QString name) {
   qDebug() << "添加Disaplay  " + name;
   _qrviz->InitDisplayTreeModel("rviz/" + newDisplay->text(0), name, true,
                                Value);
+
+  UpdateDisplayTreeView(name);
+}
+
+/**
+ * @brief 更新点云topic输入框变为ComboBox
+ */
+void MainWindow::UpdateDisplayTreeView(QString displayName) {
+
+  QAbstractItemModel *displayModel =
+      _qrviz->getVisualizationManager()->getDisplayTreeModel();
+  QList<rviz::Display *> displays;
+  QList<QVariant> pointcloud2Names;
+
+  //获取所有display中pointcloud2的name
+  for (int i = 0; i < _qrviz->getDisplayGroup()->numDisplays(); i++) {
+    displays.append(_qrviz->getDisplayGroup()->getDisplayAt(i));
+    if (displays.at(i)->getClassId() == "rviz/PointCloud2") {
+      pointcloud2Names.append(QVariant(displays.at(i)->getName()));
+    }
+  }
+
+  ComboBoxDelegate *delegate = new ComboBoxDelegate(ui->typeTreeView);
+
+  //获取当前所有发布的点云topic
+  QStringList allPC2Topics;
+  QMap<QString, QString> alltopics = GetAllTopicsAndTypes();
+  for (auto topic = alltopics.begin(); topic != alltopics.end(); ++topic) {
+
+    if (topic.value() == "sensor_msgs/PointCloud2")
+      allPC2Topics.append(topic.key());
+  }
+
+  //将topic选择改为combobox
+
+  for (int i = 0; i < displayModel->rowCount(); i++) {
+    QVariant newDisplayName = displayModel->data(displayModel->index(i, 0));
+    if (pointcloud2Names.contains(newDisplayName) &&
+        newDisplayName == QVariant(displayName)) {
+      QComboBox *editor = static_cast<QComboBox *>(delegate->createEditor(
+          ui->typeTreeView, QStyleOptionViewItem(),
+          ui->typeTreeView->model()->index(i, 0).child(0, 1)));
+
+      //填入所有点云topic
+      editor->addItem("");
+      editor->addItems(allPC2Topics);
+
+      ui->typeTreeView->setIndexWidget(
+          ui->typeTreeView->model()->index(i, 0).child(0, 1), editor);
+
+      connect(editor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+              [=](int) {
+                delegate->setModelData(
+                    editor, ui->typeTreeView->model(),
+                    ui->typeTreeView->model()->index(i, 0).child(1, 1));
+              });
+    }
+  }
 }
 
 //工具栏slot
@@ -359,8 +417,6 @@ void MainWindow::InitPC2Model() {
   AddTreeViewRow(pc2Model, "is_dense", "", items);
 }
 
-void MainWindow::UpdateDataTreeView() {}
-
 void MainWindow::AddTreeViewRow(QStandardItem *parentItem, QString name,
                                 QString data, QList<QStandardItem *> items) {
   items.append(new QStandardItem(name));
@@ -385,6 +441,18 @@ QMap<QString, QString> MainWindow::GetAllTopicsAndTypes() {
   for (ros::master::V_TopicInfo::const_iterator it = topic_info.begin();
        it != topic_info.end(); it++) {
     all_topics.insert(it->name.c_str(), it->datatype.c_str());
+  }
+  return all_topics;
+}
+
+QStringList MainWindow::GetAllTopics() {
+  ros::master::V_TopicInfo topic_info;
+  ros::master::getTopics(topic_info);
+
+  QStringList all_topics;
+  for (ros::master::V_TopicInfo::const_iterator it = topic_info.begin();
+       it != topic_info.end(); it++) {
+    all_topics.append(it->name.c_str());
   }
   return all_topics;
 }
