@@ -262,6 +262,7 @@ void MainWindow::AddNewDisplaySlot(QTreeWidgetItem *newDisplay, QString name) {
 
 /**
  * @brief 更新点云topic输入框变为ComboBox
+ * @param displayName 添加的display名称
  */
 void MainWindow::UpdateDisplayTreeView(QString displayName) {
 
@@ -300,7 +301,6 @@ void MainWindow::UpdateDisplayTreeView(QString displayName) {
           ui->typeTreeView->model()->index(i, 0).child(0, 1)));
 
       //填入所有点云topic
-      editor->addItem("");
       editor->addItems(allPC2Topics);
 
       ui->typeTreeView->setIndexWidget(
@@ -346,7 +346,7 @@ void MainWindow::PauseActionClickedSlot() {
 }
 
 /**
- * @brief MainWindow::RecordActionClickedSlot
+ * @brief slot 录制按钮SLOT
  */
 void MainWindow::RecordActionClickedSlot() {
   recordBagPanel->show();
@@ -358,10 +358,20 @@ void MainWindow::RecordActionClickedSlot() {
   }
 }
 
+/**
+ * @brief slot data面板topic更改时调用
+ * @param topicName 更改的topic名称
+ */
 void MainWindow::DataTopicChangedSlot(QString topicName) {
   OnDataTopicChanged(topicName);
 }
 
+/**
+ * @brief 事件过滤器重写，点击data面板的combobox时调用
+ * @param watched
+ * @param event
+ * @return
+ */
 bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
   if (event->type() == QEvent::MouseButtonPress) {
     if (watched == ui->data_topic_comboBox) {
@@ -382,6 +392,9 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
 }
 
 // data tree view
+/**
+ * @brief 将其他类型转换为QString
+ */
 template <typename T> QString MainWindow::typeToString(T type) {
   std::stringstream hexNumber;
   hexNumber << std::setiosflags(std::ios::uppercase) << std::hex
@@ -389,8 +402,9 @@ template <typename T> QString MainWindow::typeToString(T type) {
   std::string result = hexNumber.str();
   return QString::fromStdString(result);
 }
+
 /**
- * @brief MainWindow::InitPC2Model
+ * @brief 初始化点云数据的树形结构model
  */
 void MainWindow::InitPC2Model() {
   pc2Model = new QStandardItemModel();
@@ -417,6 +431,13 @@ void MainWindow::InitPC2Model() {
   AddTreeViewRow(pc2Model, "is_dense", "", items);
 }
 
+/**
+ * @brief 在树形model中添加行
+ * @param parentItem 父Item
+ * @param name 子Item名称key
+ * @param data 子Item数据value
+ * @param items temp
+ */
 void MainWindow::AddTreeViewRow(QStandardItem *parentItem, QString name,
                                 QString data, QList<QStandardItem *> items) {
   items.append(new QStandardItem(name));
@@ -433,6 +454,10 @@ void MainWindow::AddTreeViewRow(QStandardItemModel *parentModel, QString name,
   items.clear();
 }
 
+/**
+ * @brief 获取当前所有Topic和其类型
+ * @return 返回QMap对象，包含topic的名称（key）和topic的类型（value）
+ */
 QMap<QString, QString> MainWindow::GetAllTopicsAndTypes() {
   ros::master::V_TopicInfo topic_info;
   ros::master::getTopics(topic_info);
@@ -445,6 +470,10 @@ QMap<QString, QString> MainWindow::GetAllTopicsAndTypes() {
   return all_topics;
 }
 
+/**
+ * @brief 获取当前所有Topic
+ * @return 返回QStringList对象，包含所有topic的名称
+ */
 QStringList MainWindow::GetAllTopics() {
   ros::master::V_TopicInfo topic_info;
   ros::master::getTopics(topic_info);
@@ -457,6 +486,10 @@ QStringList MainWindow::GetAllTopics() {
   return all_topics;
 }
 
+/**
+ * @brief data面板topic改变时调用，更改面板的model以及数据
+ * @param topicName topic的名称
+ */
 void MainWindow::OnDataTopicChanged(QString topicName) {
   QMap<QString, QString> all_topics = GetAllTopicsAndTypes();
   ui->dataType_LineEdit->setText(all_topics[topicName]);
@@ -494,9 +527,14 @@ void MainWindow::OnDataTopicChanged(QString topicName) {
   dataTimerThread->start();
 }
 
+/**
+ * @brief 根据topic名称更新面板中的model和数据内容
+ * @param topicName 新的topic名称
+ */
 void MainWindow::UpdateData(QString topicName) {
   QMap<QString, QString> all_topics = GetAllTopicsAndTypes();
 
+  //点云消息
   if (all_topics[topicName] == "sensor_msgs/PointCloud2") {
     boost::shared_ptr<sensor_msgs::PointCloud2 const> pc2;
     std::string topic = ui->data_topic_comboBox->currentText().toStdString();
@@ -523,7 +561,7 @@ void MainWindow::UpdateData(QString topicName) {
 
 // camera
 /**
- * @brief MainWindow::OnAddCamBtnClickedSlot
+ * @brief slot 点击添加相机按钮时调用
  */
 int cameraIndex = 0; //相机标题index
 void MainWindow::OnAddCamBtnClickedSlot() {
@@ -560,7 +598,7 @@ void MainWindow::OnAddCamBtnClickedSlot() {
 }
 
 /**
- * @brief MainWindow::OnResizeCamBtnClickedSlot
+ * @brief 点击相机重设大小时调用，将各个相机设为自适应窗口大小
  */
 void MainWindow::OnResizeCamBtnClickedSlot() {
   if (mdiArea->subWindowList().isEmpty())
@@ -584,7 +622,7 @@ void MainWindow::OnResizeCamBtnClickedSlot() {
 }
 
 /**
- * @brief 更新image话题列表
+ * @brief slot 点击相机窗口的combobox时调用，更新image话题列表
  */
 
 void MainWindow::OnCamComboBoxClickedSlot(CamMdiSubWindow *subwindow) {

@@ -49,7 +49,7 @@ void AddDisplay::initUi() {
 
 // Slots
 /**
- * @brief AddDisplay::DisplayWidgetItemChangedSlot
+ * @brief slot 选择display时殿用
  * @param current
  * @param previous
  */
@@ -64,7 +64,14 @@ void AddDisplay::DisplayWidgetItemChangedSlot(QTreeWidgetItem *current,
   currentChoose = current->clone();
 }
 
+/**
+ * @brief slot 取消按钮
+ */
 void AddDisplay::OnCancelBtnClickedSlot() { this->close(); }
+
+/**
+ * @brief slot 点击确认按钮时调用
+ */
 void AddDisplay::OnConfirmBtnClickedSlot() {
   qDebug() << HasRepeatedDisplayName(ui->name_lineEdit->text());
   if (HasRepeatedDisplayName(ui->name_lineEdit->text())) {

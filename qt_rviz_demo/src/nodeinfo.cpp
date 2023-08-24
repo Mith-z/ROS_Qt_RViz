@@ -33,6 +33,9 @@ nodeinfo::~nodeinfo() {
   delete timer;
 }
 
+/**
+ * @brief 初始化信息面板
+ */
 void nodeinfo::InitInfoTable() {
   // 创建表格视图和表格模型
   model = new QStandardItemModel();

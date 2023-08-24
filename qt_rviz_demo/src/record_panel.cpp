@@ -115,7 +115,7 @@ void RecordPanel::OnRecordBtnClickedSlot() {
 }
 
 /**
- * @brief RecordPanel::OnStopRecordBtnClickedSlot
+ * @brief slot 点击停止录制按钮时调用
  */
 void RecordPanel::OnStopRecordBtnClickedSlot() {
   if (!recordThread->isRunning())

@@ -15,7 +15,7 @@ public:
                         const QModelIndex &index) const override {
     // 创建 QComboBox 编辑器
     QComboBox *editor = new QComboBox(parent);
-
+    editor->addItem("");
     return editor;
   }
 
@@ -25,7 +25,7 @@ public:
     QComboBox *comboBox = static_cast<QComboBox *>(editor);
     comboBox->setCurrentText(value);
 
-    qDebug() << "editor";
+    qDebug() << "edit";
   }
 
   void setModelData(QWidget *editor, QAbstractItemModel *model,
